@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcetto Manager - Aldissima</title>
+    <meta name="description" content="Gestione partite di calcetto - Convocazioni, squadre, statistiche e classifiche">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Loading screen -->
+        <div id="loading" class="loading-screen">
+            <div class="loading-spinner"></div>
+            <p>Caricamento...</p>
+        </div>
+
+        <!-- Auth screen -->
+        <div id="auth-screen" class="screen hidden">
+            <div class="auth-container">
+                <div class="auth-header">
+                    <div class="logo">⚽</div>
+                    <h1>Calcetto Manager</h1>
+                    <p class="subtitle">Aldissima</p>
+                </div>
+
+                <div id="login-form" class="auth-form">
+                    <h2>Accedi</h2>
+                    <div class="form-group">
+                        <label for="login-username">Nome utente</label>
+                        <input type="text" id="login-username" placeholder="nome.cognome (es. mario.rossi)"
+                            autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password (4 cifre)</label>
+                        <input type="password" id="login-password" placeholder="0000" maxlength="4" pattern="[0-9]{4}"
+                            inputmode="numeric">
+                    </div>
+                    <button type="button" id="login-btn" class="btn btn-primary">Accedi</button>
+                    <p class="auth-switch">Non hai un account? <a href="#" id="show-register">Registrati</a></p>
+                </div>
+
+                <div id="register-form" class="auth-form hidden">
+                    <h2>Registrati</h2>
+                    <div class="form-group">
+                        <label for="reg-nome">Nome</label>
+                        <input type="text" id="reg-nome" placeholder="Mario" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-cognome">Cognome</label>
+                        <input type="text" id="reg-cognome" placeholder="Rossi" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-soprannome">Soprannome (opzionale)</label>
+                        <input type="text" id="reg-soprannome" placeholder="Il Mago">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-telefono">Telefono</label>
+                        <input type="tel" id="reg-telefono" placeholder="333 1234567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password (4 cifre)</label>
+                        <input type="password" id="reg-password" placeholder="0000" maxlength="4" pattern="[0-9]{4}"
+                            inputmode="numeric" required>
+                    </div>
+                    <button type="button" id="register-btn" class="btn btn-primary">Registrati</button>
+                    <p class="auth-switch">Hai già un account? <a href="#" id="show-login">Accedi</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main app -->
+        <div id="main-app" class="hidden">
+            <!-- Header -->
+            <header class="app-header">
+                <h1 id="page-title" class="mobile-only">Dashboard</h1>
+
+                <!-- Desktop Navigation -->
+                <nav class="desktop-nav desktop-only">
+                    <button class="nav-item-desktop active" data-page="dashboard">Home</button>
+                    <button class="nav-item-desktop" data-page="partite">Partite</button>
+                    <button class="nav-item-desktop" data-page="giocatori">Giocatori</button>
+                    <button class="nav-item-desktop" data-page="statistiche">Stats</button>
+                    <button class="nav-item-desktop admin-only hidden" data-page="admin">Admin</button>
+                </nav>
+
+                <div class="header-actions">
+                    <span id="user-role" class="role-badge">Operatore</span>
+                    <button id="logout-btn" class="btn btn-secondary btn-sm" title="Esci">🚪 Esci</button>
+                </div>
+            </header>
+
+            <!-- Main content -->
+            <main id="main-content">
+                <!-- Content will be dynamically loaded here -->
+            </main>
+
+            <!-- Bottom navigation -->
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-label">Home</span>
+                </button>
+                <button class="nav-item" data-page="partite">
+                    <span class="nav-icon">📅</span>
+                    <span class="nav-label">Partite</span>
+                </button>
+                <button class="nav-item" data-page="giocatori">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">Giocatori</span>
+                </button>
+                <button class="nav-item" data-page="statistiche">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Stats</span>
+                </button>
+                <button class="nav-item admin-only hidden" data-page="admin">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Admin</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Modal container -->
+        <div id="modal-backdrop" class="modal-backdrop hidden">
+            <div id="modal-container" class="modal-container">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Toast notifications -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- App modules -->
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
