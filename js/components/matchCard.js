@@ -9,6 +9,7 @@ import {
     updateTeams,
     setTeams,
     resetTeams,
+    setResults,
     deleteMatch,
     getAllMatches,
     getMatchIdentifier,
@@ -1031,14 +1032,13 @@ function renderResultsForm(match, players) {
         const cartellini = Array.from(cardCheckboxes).map(cb => cb.dataset.playerId);
 
         try {
-            await db.update('matches', match.id, {
+            await setResults(match.id, {
                 gol_rossi: gol_rossi,
                 gol_blu: gol_blu,
                 mvp_rossi: mvp_rossi,
                 mvp_blu: mvp_blu,
                 marcatori,
-                cartellini,
-                stato: STATI.CHIUSA
+                cartellini
             });
 
             // Update player stats

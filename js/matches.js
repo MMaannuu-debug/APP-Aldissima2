@@ -46,7 +46,8 @@ export async function getAllMatches() {
         .select(`
             *,
             match_convocations(player_id, risposta, is_convocato),
-            match_teams(player_id, team)
+            match_teams(player_id, team),
+            match_events(player_id, tipo, quantita)
         `)
         .order('data', { ascending: false });
 
@@ -66,7 +67,9 @@ export async function getAllMatches() {
             convocazioni,
             convocatiIds,
             squadraRossa: m.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
-            squadraBlu: m.match_teams.filter(t => t.team === 'blu').map(t => t.player_id)
+            squadraBlu: m.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),
+            marcatori: m.match_events.filter(e => e.tipo === 'gol').map(e => ({ playerId: e.player_id, gol: e.quantita })),
+            cartellini: m.match_events.filter(e => e.tipo === 'cartellino_giallo').map(e => e.player_id)
         };
     });
 
@@ -140,7 +143,8 @@ export async function getMatchWithDetails(id) {
         .select(`
             *,
             match_convocations(player_id, risposta, is_convocato),
-            match_teams(player_id, team)
+            match_teams(player_id, team),
+            match_events(player_id, tipo, quantita)
         `)
         .eq('id', id)
         .single();
@@ -159,7 +163,9 @@ export async function getMatchWithDetails(id) {
         convocazioni,
         convocatiIds,
         squadraRossa: match.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
-        squadraBlu: match.match_teams.filter(t => t.team === 'blu').map(t => t.player_id)
+        squadraBlu: match.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),
+        marcatori: match.match_events.filter(e => e.tipo === 'gol').map(e => ({ playerId: e.player_id, gol: e.quantita })),
+        cartellini: match.match_events.filter(e => e.tipo === 'cartellino_giallo').map(e => e.player_id)
     };
 }
 
@@ -200,6 +206,7 @@ export async function updateMatch(id, updates) {
     const {
         convocazioni, convocatiIds,
         squadraRossa, squadraBlu,
+        marcatori, cartellini,
         ...coreUpdates
     } = updates;
 
@@ -336,15 +343,48 @@ export async function resetTeams(matchId) {
 // ================================
 
 export async function setResults(matchId, results) {
+    const supabase = db.getClient();
+    if (!supabase) return;
+
     const { gol_rossi, gol_blu, marcatori, cartellini, mvp_rossi, mvp_blu } = results;
 
+    // 1. Sync events (delete old, insert new)
+    const { error: delError } = await supabase
+        .from('match_events')
+        .delete()
+        .eq('match_id', matchId);
+
+    if (delError) throw delError;
+
+    const eventData = [
+        ...(marcatori || []).map(m => ({
+            match_id: matchId,
+            player_id: m.playerId,
+            tipo: 'gol',
+            quantita: m.gol || 1
+        })),
+        ...(cartellini || []).map(pid => ({
+            match_id: matchId,
+            player_id: pid,
+            tipo: 'cartellino_giallo',
+            quantita: 1
+        }))
+    ];
+
+    if (eventData.length > 0) {
+        const { error: insError } = await supabase
+            .from('match_events')
+            .insert(eventData);
+        if (insError) throw insError;
+    }
+
+    // 2. Update core match data
     return await updateMatch(matchId, {
         gol_rossi,
         gol_blu,
-        marcatori: marcatori || [],
-        cartellini: cartellini || [],
         mvp_rossi,
-        mvp_blu
+        mvp_blu,
+        stato: STATI.CHIUSA // Ensure it closes correctly
     });
 }
 
