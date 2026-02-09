@@ -7,6 +7,8 @@ import db from '../db.js';
 import {
     updateConvocations,
     updateTeams,
+    setTeams,
+    resetTeams,
     deleteMatch,
     getAllMatches,
     getMatchIdentifier,
@@ -453,15 +455,9 @@ function setupMatchModalHandlers(match, players, matches) {
     document.getElementById('reset-teams-btn')?.addEventListener('click', async () => {
         if (!confirm('Sei sicuro di voler resettare le squadre?')) return;
         try {
-            await db.update('matches', match.id, {
-                squadra_rossa: [],
-                squadra_blu: [],
-                stato: STATI.COMPLETA
-            });
-            const updatedMatches = await db.getAll('matches');
-            store.setState({ matches: updatedMatches });
+            await resetTeams(match.id);
             showToast('Squadre resettate', 'success');
-            renderMatchModal(match.id); // Refresh modal
+            renderMatchModal(match.id);
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -874,13 +870,9 @@ function renderTeamBuilder(match, players, matches) {
         }
 
         try {
-            await updateTeams(match.id, assignments.rossi, assignments.blu);
-            await db.update('matches', match.id, {
-                stato: STATI.SQUADRE_GENERATE
-            });
-            await getAllMatches();
+            await setTeams(match.id, assignments.rossi, assignments.blu);
             showToast('Squadre salvate!', 'success');
-            renderMatchModal(match.id); // Refresh modal
+            renderMatchModal(match.id);
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }

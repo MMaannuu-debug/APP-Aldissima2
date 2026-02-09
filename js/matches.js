@@ -196,9 +196,20 @@ export async function createMatch(matchData = {}) {
 }
 
 export async function updateMatch(id, updates) {
-    const updated = await db.update(COLLECTION, id, updates);
+    // Separate relational data from core match data
+    const {
+        convocazioni, convocatiIds,
+        squadraRossa, squadraBlu,
+        ...coreUpdates
+    } = updates;
 
-    // Update store
+    // Update core table if there are changes
+    let updated = null;
+    if (Object.keys(coreUpdates).length > 0) {
+        updated = await db.update(COLLECTION, id, coreUpdates);
+    }
+
+    // Refresh store and handle local state
     const matches = store.getState().matches.map(m =>
         m.id === id ? { ...m, ...updates } : m
     );
@@ -303,9 +314,8 @@ export async function openToReserves(matchId) {
 // ================================
 
 export async function setTeams(matchId, squadraRossa, squadraBlu) {
+    await updateTeams(matchId, squadraRossa, squadraBlu);
     return await updateMatch(matchId, {
-        squadraRossa,
-        squadraBlu,
         stato: STATI.SQUADRE_GENERATE
     });
 }
@@ -315,9 +325,8 @@ export async function publishTeams(matchId) {
 }
 
 export async function resetTeams(matchId) {
+    await updateTeams(matchId, [], []);
     return await updateMatch(matchId, {
-        squadraRossa: [],
-        squadraBlu: [],
         stato: STATI.COMPLETA
     });
 }
