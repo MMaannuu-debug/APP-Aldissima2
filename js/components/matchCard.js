@@ -526,9 +526,9 @@ export function renderMatchForm(match) {
             </form>
         </div>
         <div class="modal-footer">
-            ${isAdmin ? `<button class="btn btn-danger btn-sm" id="delete-match-btn" style="margin-right: auto;">Elimina</button>` : ''}
+            ${isAdmin && isEdit ? `<button class="btn btn-danger btn-sm" id="delete-match-btn" style="margin-right: auto;">Elimina</button>` : ''}
             <button class="btn btn-secondary" data-action="close-modal">Chiudi</button>
-            ${isAdmin && match.stato !== STATI.CHIUSA ? `
+            ${isAdmin && isEdit && match?.stato !== STATI.CHIUSA ? `
                 <button class="btn btn-primary" id="edit-match-btn">Modifica</button>
             ` : ''}
             <button class="btn btn-primary" id="save-match-btn">Salva</button>
@@ -584,7 +584,7 @@ export function renderMatchForm(match) {
 
             const updatedMatches = await getAllMatches();
             store.setState({ matches: updatedMatches });
-            renderMatchModal(matchIdToRefresh || match.id); // Refresh modal or list
+            renderMatchModal(matchIdToRefresh || match?.id); // Refresh modal or list
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
