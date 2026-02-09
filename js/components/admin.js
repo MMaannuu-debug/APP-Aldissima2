@@ -129,10 +129,12 @@ export async function renderAdmin(container, state) {
         if (!confirm('CONFERMA FINALE: Tutti i giocatori, partite e statistiche verranno eliminati!')) return;
 
         try {
-            localStorage.clear();
-            location.reload();
+            showToast('Reset in corso...', 'info');
+            await db.resetDatabase();
+            showToast('Database resettato con successo', 'success');
+            setTimeout(() => location.reload(), 1000);
         } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
+            showToast('Errore durante il reset: ' + error.message, 'error');
         }
     });
 

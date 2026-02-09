@@ -117,6 +117,9 @@ export const supabaseDB = {
                 throw error;
             }
         }
+
+        // Always clear local data after database wipe
+        localStorage.clear();
     }
 };
 
