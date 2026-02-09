@@ -37,9 +37,130 @@ export const RISPOSTE = {
 // ================================
 
 export async function getAllMatches() {
-    const matches = await db.getAll(COLLECTION);
-    store.setState({ matches });
-    return matches;
+    if (!db.getClient) return await db.getAll(COLLECTION);
+
+    const supabase = db.getClient();
+    // Fetch matches with related convocations and teams
+    const { data: matches, error } = await supabase
+        .from(COLLECTION)
+        .select(`
+            *,
+            match_convocations(player_id, risposta, is_convocato),
+            match_teams(player_id, team)
+        `)
+        .order('data', { ascending: false });
+
+    if (error) throw error;
+
+    // Map the relational data back to the format the app expects
+    const formattedMatches = matches.map(m => {
+        const convocazioni = {};
+        const convocatiIds = [];
+        m.match_convocations.forEach(c => {
+            convocazioni[c.player_id] = c.risposta;
+            if (c.is_convocato) convocatiIds.push(c.player_id);
+        });
+
+        return {
+            ...m,
+            convocazioni,
+            convocatiIds,
+            squadraRossa: m.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
+            squadraBlu: m.match_teams.filter(t => t.team === 'blu').map(t => t.player_id)
+        };
+    });
+
+    store.setState({ matches: formattedMatches });
+    return formattedMatches;
+}
+
+export async function updateConvocations(matchId, convocatiIds, convocazioni) {
+    const supabase = db.getClient();
+    if (!supabase) return;
+
+    // First delete all existing for this match to be safe, or use upsert
+    // Upsert is better but we might have removed some.
+    // For simplicity with RLS and common patterns: delete then insert.
+    const { error: delError } = await supabase
+        .from('match_convocations')
+        .delete()
+        .eq('match_id', matchId);
+
+    if (delError) throw delError;
+
+    const insertData = convocatiIds.map(pid => ({
+        match_id: matchId,
+        player_id: pid,
+        risposta: convocazioni[pid] || RISPOSTE.IN_ATTESA,
+        is_convocato: true
+    }));
+
+    if (insertData.length > 0) {
+        const { error: insError } = await supabase
+            .from('match_convocations')
+            .insert(insertData);
+        if (insError) throw insError;
+    }
+
+    return await getAllMatches();
+}
+
+export async function updateTeams(matchId, squadraRossa, squadraBlu) {
+    const supabase = db.getClient();
+    if (!supabase) return;
+
+    const { error: delError } = await supabase
+        .from('match_teams')
+        .delete()
+        .eq('match_id', matchId);
+
+    if (delError) throw delError;
+
+    const insertData = [
+        ...squadraRossa.map(pid => ({ match_id: matchId, player_id: pid, team: 'rossi' })),
+        ...squadraBlu.map(pid => ({ match_id: matchId, player_id: pid, team: 'blu' }))
+    ];
+
+    if (insertData.length > 0) {
+        const { error: insError } = await supabase
+            .from('match_teams')
+            .insert(insertData);
+        if (insError) throw insError;
+    }
+
+    return await getAllMatches();
+}
+
+export async function getMatchWithDetails(id) {
+    const supabase = db.getClient();
+    if (!supabase) return await db.getById(COLLECTION, id);
+
+    const { data: match, error } = await supabase
+        .from(COLLECTION)
+        .select(`
+            *,
+            match_convocations(player_id, risposta, is_convocato),
+            match_teams(player_id, team)
+        `)
+        .eq('id', id)
+        .single();
+
+    if (error) throw error;
+
+    const convocazioni = {};
+    const convocatiIds = [];
+    match.match_convocations.forEach(c => {
+        convocazioni[c.player_id] = c.risposta;
+        if (c.is_convocato) convocatiIds.push(c.player_id);
+    });
+
+    return {
+        ...match,
+        convocazioni,
+        convocatiIds,
+        squadraRossa: match.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
+        squadraBlu: match.match_teams.filter(t => t.team === 'blu').map(t => t.player_id)
+    };
 }
 
 export async function getMatch(id) {
@@ -62,21 +183,15 @@ export async function createMatch(matchData = {}) {
         dataAperturaRiserve: null,
         squadraRossa: [],
         squadraBlu: [],
-        golRossi: null,
-        golBlu: null,
-        marcatori: [], // [{ playerId, gol }]
-        cartellini: [], // [playerId]
-        mvpRossi: null,
-        mvpBlu: null,
+        gol_rossi: null,
+        gol_blu: null,
+        mvp_rossi: null,
+        mvp_blu: null,
         pronostico: null
     };
 
     const saved = await db.add(COLLECTION, newMatch);
-
-    // Update store
-    const matches = store.getState().matches;
-    store.setState({ matches: [...matches, saved] });
-
+    await getAllMatches();
     return saved;
 }
 
@@ -150,6 +265,29 @@ export async function respondToConvocation(matchId, playerId, risposta) {
         updates.stato = STATI.COMPLETA;
     }
 
+    // Update the specific convocation in Supabase
+    const supabase = db.getClient();
+    if (supabase) {
+        const { error } = await supabase
+            .from('match_convocations')
+            .upsert({
+                match_id: matchId,
+                player_id: playerId,
+                risposta: risposta,
+                is_convocato: match.convocatiIds?.includes(playerId) || false
+            }, { onConflict: 'match_id, player_id' });
+
+        if (error) throw error;
+
+        // Also update match state if needed
+        if (updates.stato) {
+            await updateMatch(matchId, { stato: updates.stato });
+        }
+
+        // Refetch to ensure local state is consistent
+        return await getAllMatches();
+    }
+
     return await updateMatch(matchId, updates);
 }
 
@@ -189,15 +327,15 @@ export async function resetTeams(matchId) {
 // ================================
 
 export async function setResults(matchId, results) {
-    const { golRossi, golBlu, marcatori, cartellini, mvpRossi, mvpBlu } = results;
+    const { gol_rossi, gol_blu, marcatori, cartellini, mvp_rossi, mvp_blu } = results;
 
     return await updateMatch(matchId, {
-        golRossi,
-        golBlu,
+        gol_rossi,
+        gol_blu,
         marcatori: marcatori || [],
         cartellini: cartellini || [],
-        mvpRossi,
-        mvpBlu
+        mvp_rossi,
+        mvp_blu
     });
 }
 
@@ -206,7 +344,7 @@ export async function closeMatch(matchId) {
     if (!match) throw new Error('Partita non trovata');
 
     // Validate required data
-    if (match.golRossi === null || match.golBlu === null) {
+    if (match.gol_rossi === null || match.gol_blu === null) {
         throw new Error('Inserisci il risultato prima di chiudere');
     }
 

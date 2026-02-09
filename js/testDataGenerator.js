@@ -15,25 +15,25 @@ export async function generateTestPlayers(count = 20) {
             soprannome: `TestPlayer${i}`,
             telefono: `33300000${i.toString().padStart(2, '0')}`,
             email: `player${i}@test.com`,
-            password: '9999',
+            password_numeric: '9999',
             ruolo: 'operatore',
             tipologia: 'titolare',
-            ruoloPrincipale: role,
-            ruoloSecondario: '',
-            valutazioneGenerale: Math.floor(Math.random() * 3) + 3, // 3-5
-            visioneGioco: Math.floor(Math.random() * 3) + 3,
+            ruolo_principale: role,
+            ruolo_secondario: '',
+            valutazione_generale: Math.floor(Math.random() * 3) + 3, // 3-5
+            visione_gioco: Math.floor(Math.random() * 3) + 3,
             corsa: Math.floor(Math.random() * 3) + 3,
             possesso: Math.floor(Math.random() * 3) + 3,
-            formaFisica: Math.floor(Math.random() * 3) + 3,
+            forma_fisica: Math.floor(Math.random() * 3) + 3,
             foto: '',
             bloccato: false,
-            puntiMVP: 0,
-            partiteVinte: 0,
+            punti_mvp: 0,
+            partite_vinte: 0,
             presenze: 0,
-            golSegnati: 0,
-            cartelliniRicevuti: 0,
-            partiteRossi: 0,
-            partiteBlu: 0
+            gol_segnati: 0,
+            cartellini_ricevuti: 0,
+            partite_rossi: 0,
+            partite_blu: 0
         };
 
         try {
@@ -80,10 +80,10 @@ export async function generateTestMatches(count = 10) {
 
         const marcatori = [];
         // Assign random goals
-        const totalGoals = golRossi + golBlu;
+        const totalGoals = golRossi + gol_blu;
         for (let g = 0; g < totalGoals; g++) {
             const scorerId = selected[Math.floor(Math.random() * selected.length)].id;
-            marcatori.push({ playerId: scorerId, gol: 1 });
+            marcatori.push({ player_id: scorerId, gol: 1 });
         }
 
         const match = {
@@ -96,12 +96,12 @@ export async function generateTestMatches(count = 10) {
             convocatiIds: selected.map(p => p.id),
             squadraRossa: squadraRossa,
             squadraBlu: squadraBlu,
-            golRossi: golRossi,
-            golBlu: golBlu,
+            gol_rossi: golRossi,
+            gol_blu: golBlu,
             marcatori: marcatori,
             cartellini: [],
-            mvpRossi: squadraRossa[Math.floor(Math.random() * squadraRossa.length)],
-            mvpBlu: squadraBlu[Math.floor(Math.random() * squadraBlu.length)]
+            mvp_rossi: squadraRossa[Math.floor(Math.random() * squadraRossa.length)],
+            mvp_blu: squadraBlu[Math.floor(Math.random() * squadraBlu.length)]
         };
 
         // Set convocations

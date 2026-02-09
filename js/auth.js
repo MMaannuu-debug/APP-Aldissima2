@@ -72,7 +72,7 @@ export async function login(username, password) {
         return { success: false, error: 'Account bloccato. Contatta l\'amministratore.' };
     }
 
-    if (user.password !== password) {
+    if (user.password_numeric !== password) {
         return { success: false, error: 'Password errata' };
     }
 
@@ -119,26 +119,26 @@ export async function register(userData) {
         soprannome: userData.soprannome?.trim() || '',
         telefono: userData.telefono.trim(),
         email: userData.email?.trim() || '',
-        password: userData.password,
+        password_numeric: userData.password,
         ruolo: 'operatore', // Default role
         tipologia: 'riserva', // Default type
-        ruoloPrincipale: 'centrocampista',
-        ruoloSecondario: '',
-        valutazioneGenerale: 3,
-        visioneGioco: 3,
+        ruolo_principale: 'centrocampista',
+        ruolo_secondario: '',
+        valutazione_generale: 3,
+        visione_gioco: 3,
         corsa: 3,
         possesso: 3,
-        formaFisica: 3,
+        forma_fisica: 3,
         foto: '',
         bloccato: false,
         // Stats
-        puntiMVP: 0,
-        partiteVinte: 0,
+        punti_mvp: 0,
+        partite_vinte: 0,
         presenze: 0,
-        golSegnati: 0,
-        cartelliniRicevuti: 0,
-        partiteRossi: 0,
-        partiteBlu: 0
+        gol_segnati: 0,
+        cartellini_ricevuti: 0,
+        partite_rossi: 0,
+        partite_blu: 0
     };
 
     try {
@@ -179,7 +179,7 @@ export async function updatePassword(userId, newPassword) {
     }
 
     try {
-        await db.update(COLLECTION, userId, { password: newPassword });
+        await db.update(COLLECTION, userId, { password_numeric: newPassword });
         return { success: true };
     } catch (error) {
         console.error('Password update error:', error);

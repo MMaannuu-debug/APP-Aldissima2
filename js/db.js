@@ -1,44 +1,101 @@
 // ================================
-// DATABASE MODULE - Firebase Firestore
+// DATABASE MODULE - Supabase
 // ================================
 
-// Firebase configuration - Replace with your own config
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+// Supabase configuration - Replace with your own project details
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-// Initialize Firebase
-let db = null;
+// Initialize Supabase
+let supabase = null;
 
 export function initDatabase() {
     return new Promise((resolve, reject) => {
         try {
-            // Check if Firebase is loaded
-            if (typeof firebase === 'undefined') {
-                console.warn('Firebase not loaded, using localStorage fallback');
+            // Check if Supabase is loaded from CDN
+            if (typeof window.supabase === 'undefined') {
+                console.warn('Supabase not loaded, using localStorage fallback');
                 resolve(false);
                 return;
             }
 
-            // Initialize if not already done
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-
-            db = firebase.firestore();
-            console.log('Firebase initialized');
+            // Initialize client
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase initialized');
             resolve(true);
         } catch (error) {
-            console.warn('Firebase init failed, using localStorage:', error);
+            console.warn('Supabase init failed, using localStorage:', error);
             resolve(false);
         }
     });
 }
+
+// ================================
+// Supabase CRUD Operations
+// ================================
+
+export const supabaseDB = {
+    async getAll(table) {
+        if (!supabase) return localDB.getAll(table);
+        const { data, error } = await supabase.from(table).select('*');
+        if (error) throw error;
+        return data;
+    },
+
+    async getById(table, id) {
+        if (!supabase) return localDB.getById(table, id);
+        const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+        if (error) return null;
+        return data;
+    },
+
+    async add(table, data) {
+        if (!supabase) return localDB.add(table, data);
+        const { data: inserted, error } = await supabase.from(table).insert([data]).select().single();
+        if (error) throw error;
+        return inserted;
+    },
+
+    async update(table, id, data) {
+        if (!supabase) return localDB.update(table, id, data);
+        const { data: updated, error } = await supabase.from(table).update(data).eq('id', id).select().single();
+        if (error) throw error;
+        return updated;
+    },
+
+    async delete(table, id) {
+        if (!supabase) return localDB.delete(table, id);
+        const { error } = await supabase.from(table).delete().eq('id', id);
+        if (error) throw error;
+    },
+
+    async query(table, field, operator, value) {
+        if (!supabase) return localDB.query(table, field, operator, value);
+
+        let query = supabase.from(table).select('*');
+
+        // Map operator to Supabase filter
+        switch (operator) {
+            case '==': query = query.eq(field, value); break;
+            case '!=': query = query.neq(field, value); break;
+            case '>': query = query.gt(field, value); break;
+            case '>=': query = query.gte(field, value); break;
+            case '<': query = query.lt(field, value); break;
+            case '<=': query = query.lte(field, value); break;
+            case 'in': query = query.in(field, value); break;
+            default: throw new Error(`Operator ${operator} not supported`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data;
+    },
+
+    // Get Raw Client
+    getClient() {
+        return supabase;
+    }
+};
 
 // ================================
 // LocalStorage Fallback for Development
@@ -58,32 +115,28 @@ class LocalDB {
         localStorage.setItem(this.prefix + name, JSON.stringify(data));
     }
 
-    // Get all documents
     async getAll(collection) {
         return this.getCollection(collection);
     }
 
-    // Get document by ID
     async getById(collection, id) {
         const items = this.getCollection(collection);
         return items.find(item => item.id === id) || null;
     }
 
-    // Add document
     async add(collection, data) {
         const items = this.getCollection(collection);
         const newItem = {
             ...data,
             id: data.id || this.generateId(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
         };
         items.push(newItem);
         this.saveCollection(collection, items);
         return newItem;
     }
 
-    // Update document
     async update(collection, id, data) {
         const items = this.getCollection(collection);
         const index = items.findIndex(item => item.id === id);
@@ -92,20 +145,18 @@ class LocalDB {
         items[index] = {
             ...items[index],
             ...data,
-            updatedAt: new Date().toISOString()
+            updated_at: new Date().toISOString()
         };
         this.saveCollection(collection, items);
         return items[index];
     }
 
-    // Delete document
     async delete(collection, id) {
         const items = this.getCollection(collection);
         const filtered = items.filter(item => item.id !== id);
         this.saveCollection(collection, filtered);
     }
 
-    // Query by field
     async query(collection, field, operator, value) {
         const items = this.getCollection(collection);
         return items.filter(item => {
@@ -127,64 +178,7 @@ class LocalDB {
     }
 }
 
-// Export database instance
 export const localDB = new LocalDB();
 
-// ================================
-// Firestore wrapper with same interface
-// ================================
-
-export const firestoreDB = {
-    async getAll(collection) {
-        if (!db) return localDB.getAll(collection);
-        const snapshot = await db.collection(collection).get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    },
-
-    async getById(collection, id) {
-        if (!db) return localDB.getById(collection, id);
-        const doc = await db.collection(collection).doc(id).get();
-        return doc.exists ? { id: doc.id, ...doc.data() } : null;
-    },
-
-    async add(collection, data) {
-        if (!db) return localDB.add(collection, data);
-        const docRef = data.id
-            ? db.collection(collection).doc(data.id)
-            : db.collection(collection).doc();
-
-        const newData = {
-            ...data,
-            id: docRef.id,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await docRef.set(newData);
-        return { ...newData, id: docRef.id };
-    },
-
-    async update(collection, id, data) {
-        if (!db) return localDB.update(collection, id, data);
-        const docRef = db.collection(collection).doc(id);
-        await docRef.update({
-            ...data,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        const updated = await docRef.get();
-        return { id: updated.id, ...updated.data() };
-    },
-
-    async delete(collection, id) {
-        if (!db) return localDB.delete(collection, id);
-        await db.collection(collection).doc(id).delete();
-    },
-
-    async query(collection, field, operator, value) {
-        if (!db) return localDB.query(collection, field, operator, value);
-        const snapshot = await db.collection(collection).where(field, operator, value).get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-};
-
-// Default export - uses localStorage until Firebase is configured
-export default localDB;
+// Default export - uses Supabase proxy
+export default supabaseDB;

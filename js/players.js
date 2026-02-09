@@ -132,26 +132,26 @@ function getDefaultPlayerData() {
         soprannome: '',
         telefono: '',
         email: '',
-        password: '0000',
+        password_numeric: '0000',
         ruolo: 'operatore',
         tipologia: 'riserva',
-        ruoloPrincipale: 'centrocampista',
-        ruoloSecondario: '',
-        valutazioneGenerale: 3,
-        visioneGioco: 3,
+        ruolo_principale: 'centrocampista',
+        ruolo_secondario: '',
+        valutazione_generale: 3,
+        visione_gioco: 3,
         corsa: 3,
         possesso: 3,
-        formaFisica: 3,
+        forma_fisica: 3,
         foto: '',
         bloccato: false,
         // Stats
-        puntiMVP: 0,
-        partiteVinte: 0,
+        punti_mvp: 0,
+        partite_vinte: 0,
         presenze: 0,
-        golSegnati: 0,
-        cartelliniRicevuti: 0,
-        partiteRossi: 0,
-        partiteBlu: 0
+        gol_segnati: 0,
+        cartellini_ricevuti: 0,
+        partite_rossi: 0,
+        partite_blu: 0
     };
 }
 
@@ -169,11 +169,11 @@ export function getPlayerInitials(player) {
 export function calculatePlayerRating(player) {
     if (!player) return 0;
     const total = (
-        (player.valutazioneGenerale || 3) +
-        (player.visioneGioco || 3) +
+        (player.valutazione_generale || 3) +
+        (player.visione_gioco || 3) +
         (player.corsa || 3) +
         (player.possesso || 3) +
-        (player.formaFisica || 3)
+        (player.forma_fisica || 3)
     );
     return total;
 }
@@ -196,8 +196,8 @@ export function filterPlayers(players, filters = {}) {
 
     if (filters.ruolo) {
         result = result.filter(p =>
-            p.ruoloPrincipale === filters.ruolo ||
-            p.ruoloSecondario === filters.ruolo
+            p.ruolo_principale === filters.ruolo ||
+            p.ruolo_secondario === filters.ruolo
         );
     }
 
@@ -229,9 +229,9 @@ export function sortPlayers(players, sortBy = 'nome') {
             case 'presenze':
                 return (b.presenze || 0) - (a.presenze || 0);
             case 'gol':
-                return (b.golSegnati || 0) - (a.golSegnati || 0);
+                return (b.gol_segnati || 0) - (a.gol_segnati || 0);
             case 'mvp':
-                return (b.puntiMVP || 0) - (a.puntiMVP || 0);
+                return (b.punti_mvp || 0) - (a.punti_mvp || 0);
             default:
                 return 0;
         }

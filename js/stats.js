@@ -35,8 +35,8 @@ export async function updatePlayerStats(match, players) {
         if (isDraw) points += 1;
 
         // MVP points
-        const isMvpRossi = match.mvpRossi === playerId;
-        const isMvpBlu = match.mvpBlu === playerId;
+        const isMvpRossi = match.mvp_rossi === playerId;
+        const isMvpBlu = match.mvp_blu === playerId;
 
         if (isMvpRossi || isMvpBlu) {
             if (isWinner) points += 3;
@@ -44,8 +44,8 @@ export async function updatePlayerStats(match, players) {
         }
 
         // Get goals for this player
-        const playerGoals = match.marcatori
-            .filter(m => m.playerId === playerId)
+        const playerGoals = (match.marcatori || [])
+            .filter(m => m.player_id === playerId)
             .reduce((sum, m) => sum + (m.gol || 1), 0);
 
         // Get yellow cards
@@ -53,13 +53,13 @@ export async function updatePlayerStats(match, players) {
 
         // Update stats
         const statsUpdate = {
-            puntiMVP: (player.puntiMVP || 0) + (isMvpRossi || isMvpBlu ? (isWinner ? 3 : 1) : 0),
-            partiteVinte: (player.partiteVinte || 0) + (isWinner ? 1 : 0),
+            punti_mvp: (player.punti_mvp || 0) + (isMvpRossi || isMvpBlu ? (isWinner ? 3 : 1) : 0),
+            partite_vinte: (player.partite_vinte || 0) + (isWinner ? 1 : 0),
             presenze: (player.presenze || 0) + 1,
-            golSegnati: (player.golSegnati || 0) + playerGoals,
-            cartelliniRicevuti: (player.cartelliniRicevuti || 0) + yellowCards,
-            partiteRossi: (player.partiteRossi || 0) + (isRossi ? 1 : 0),
-            partiteBlu: (player.partiteBlu || 0) + (isBlu ? 1 : 0)
+            gol_segnati: (player.gol_segnati || 0) + playerGoals,
+            cartellini_ricevuti: (player.cartellini_ricevuti || 0) + yellowCards,
+            partite_rossi: (player.partite_rossi || 0) + (isRossi ? 1 : 0),
+            partite_blu: (player.partite_blu || 0) + (isBlu ? 1 : 0)
         };
 
         updates.push({ id: playerId, stats: statsUpdate });
@@ -81,15 +81,15 @@ export function getLeaderboard(players, category = 'mvp', limit = 10) {
     const sorted = [...players].sort((a, b) => {
         switch (category) {
             case 'mvp':
-                return (b.puntiMVP || 0) - (a.puntiMVP || 0);
+                return (b.punti_mvp || 0) - (a.punti_mvp || 0);
             case 'presenze':
                 return (b.presenze || 0) - (a.presenze || 0);
             case 'gol':
-                return (b.golSegnati || 0) - (a.golSegnati || 0);
+                return (b.gol_segnati || 0) - (a.gol_segnati || 0);
             case 'cartellini':
-                return (b.cartelliniRicevuti || 0) - (a.cartelliniRicevuti || 0);
+                return (b.cartellini_ricevuti || 0) - (a.cartellini_ricevuti || 0);
             case 'vittorie':
-                return (b.partiteVinte || 0) - (a.partiteVinte || 0);
+                return (b.partite_vinte || 0) - (a.partite_vinte || 0);
             default:
                 return 0;
         }
@@ -104,11 +104,11 @@ export function getLeaderboard(players, category = 'mvp', limit = 10) {
 
 function getStatValue(player, category) {
     switch (category) {
-        case 'mvp': return player.puntiMVP || 0;
+        case 'mvp': return player.punti_mvp || 0;
         case 'presenze': return player.presenze || 0;
-        case 'gol': return player.golSegnati || 0;
-        case 'cartellini': return player.cartelliniRicevuti || 0;
-        case 'vittorie': return player.partiteVinte || 0;
+        case 'gol': return player.gol_segnati || 0;
+        case 'cartellini': return player.cartellini_ricevuti || 0;
+        case 'vittorie': return player.partite_vinte || 0;
         default: return 0;
     }
 }
@@ -139,7 +139,7 @@ export function getMatchesStats(matches) {
 
     const results = closed.map(m => {
         const result = getMatchResult(m);
-        const goals = (m.golRossi || 0) + (m.golBlu || 0);
+        const goals = (m.gol_rossi || 0) + (m.gol_blu || 0);
         totalGoals += goals;
 
         if (result === 'rossi') rossiWins++;
@@ -148,8 +148,8 @@ export function getMatchesStats(matches) {
 
         return {
             date: m.data,
-            golRossi: m.golRossi,
-            golBlu: m.golBlu,
+            gol_rossi: m.gol_rossi,
+            gol_blu: m.gol_blu,
             result
         };
     });
@@ -207,15 +207,15 @@ export function exportPlayersToExcel(players) {
         Nome: p.nome,
         Cognome: p.cognome,
         Soprannome: p.soprannome || '',
-        Ruolo: p.ruoloPrincipale || '',
+        Ruolo: p.ruolo_principale || '',
         Tipologia: p.tipologia || '',
-        'Punti MVP': p.puntiMVP || 0,
-        'Partite Vinte': p.partiteVinte || 0,
+        'Punti MVP': p.punti_mvp || 0,
+        'Partite Vinte': p.partite_vinte || 0,
         Presenze: p.presenze || 0,
-        Gol: p.golSegnati || 0,
-        Cartellini: p.cartelliniRicevuti || 0,
-        'Partite Rossi': p.partiteRossi || 0,
-        'Partite Blu': p.partiteBlu || 0
+        Gol: p.gol_segnati || 0,
+        Cartellini: p.cartellini_ricevuti || 0,
+        'Partite Rossi': p.partite_rossi || 0,
+        'Partite Blu': p.partite_blu || 0
     }));
 
     exportToExcel(data, 'giocatori_calcetto');
@@ -226,8 +226,8 @@ export function exportMatchesToExcel(matches) {
         Data: m.data,
         Luogo: m.luogo,
         Tipologia: m.tipologia,
-        'Gol Rossi': m.golRossi,
-        'Gol Blu': m.golBlu,
+        'Gol Rossi': m.gol_rossi,
+        'Gol Blu': m.gol_blu,
         Risultato: getMatchResult(m) === 'rossi' ? 'Rossi' :
             getMatchResult(m) === 'blu' ? 'Blu' : 'Pareggio'
     }));
@@ -241,13 +241,13 @@ export function exportLeaderboardToExcel(players) {
 
     const data = players.map(p => ({
         Giocatore: `${p.nome} ${p.cognome}`,
-        'Punti MVP': p.puntiMVP || 0,
+        'Punti MVP': p.punti_mvp || 0,
         Presenze: p.presenze || 0,
-        Gol: p.golSegnati || 0,
-        Vittorie: p.partiteVinte || 0,
-        Cartellini: p.cartelliniRicevuti || 0,
-        'Media Gol': p.presenze ? (p.golSegnati / p.presenze).toFixed(2) : 0,
-        'Win Rate %': p.presenze ? ((p.partiteVinte / p.presenze) * 100).toFixed(1) : 0
+        Gol: p.gol_segnati || 0,
+        Vittorie: p.partite_vinte || 0,
+        Cartellini: p.cartellini_ricevuti || 0,
+        'Media Gol': p.presenze ? (p.gol_segnati / p.presenze).toFixed(2) : 0,
+        'Win Rate %': p.presenze ? ((p.partite_vinte / p.presenze) * 100).toFixed(1) : 0
     }));
 
     exportToExcel(data, 'classifiche_calcetto');

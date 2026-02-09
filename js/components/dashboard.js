@@ -57,21 +57,21 @@ export async function renderDashboard(container, state) {
 }
 
 function renderClosedMatch(match, players, matches) {
-    const mvpRossi = players.find(p => p.id === match.mvpRossi);
-    const mvpBlu = players.find(p => p.id === match.mvpBlu);
+    const mvpRossi = players.find(p => p.id === match.mvp_rossi);
+    const mvpBlu = players.find(p => p.id === match.mvp_blu);
 
-    const winner = match.golRossi > match.golBlu ? 'rossi' :
-        match.golBlu > match.golRossi ? 'blu' : 'pareggio';
+    const winner = match.gol_rossi > match.gol_blu ? 'rossi' :
+        match.gol_blu > match.gol_rossi ? 'blu' : 'pareggio';
 
     // Group scorers
-    const rossiScorers = (match.marcatori || []).filter(m => match.squadraRossa.includes(m.playerId));
-    const bluScorers = (match.marcatori || []).filter(m => match.squadraBlu.includes(m.playerId));
+    const rossiScorers = (match.marcatori || []).filter(m => match.squadraRossa.includes(m.player_id));
+    const bluScorers = (match.marcatori || []).filter(m => match.squadraBlu.includes(m.player_id));
 
     const renderScorers = (scorers) => {
         if (!scorers.length) return '';
         return scorers
             .map(m => {
-                const p = players.find(pl => pl.id === m.playerId);
+                const p = players.find(pl => pl.id === m.player_id);
                 const name = p ? (p.soprannome || p.nome) : '???';
                 return `<div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">${name} <span style="font-weight: 600; color: var(--color-text-primary);">(${m.gol})</span></div>`;
             })
@@ -94,7 +94,7 @@ function renderClosedMatch(match, players, matches) {
                     <div class="team">
                         <div class="team-name rossi">ROSSI</div>
                         <div class="team-score" style="color: ${winner === 'rossi' ? 'var(--color-team-red-dark)' : 'inherit'}">
-                            ${match.golRossi}
+                            ${match.gol_rossi}
                         </div>
                         <div class="match-scorers" style="margin-top: var(--spacing-2); min-height: 20px;">
                             ${renderScorers(rossiScorers)}
@@ -115,7 +115,7 @@ function renderClosedMatch(match, players, matches) {
                     <div class="team">
                         <div class="team-name blu">BLU</div>
                         <div class="team-score" style="color: ${winner === 'blu' ? 'var(--color-team-blue-dark)' : 'inherit'}">
-                            ${match.golBlu}
+                            ${match.gol_blu}
                         </div>
                         <div class="match-scorers" style="margin-top: var(--spacing-2); min-height: 20px;">
                             ${renderScorers(bluScorers)}

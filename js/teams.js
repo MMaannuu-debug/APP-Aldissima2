@@ -148,11 +148,11 @@ export function getTeamStats(players) {
 
     players.forEach(p => {
         stats.totalRating += calculatePlayerRating(p);
-        stats.avgValutazione += p.valutazioneGenerale || 3;
-        stats.avgVisione += p.visioneGioco || 3;
+        stats.avgValutazione += p.valutazione_generale || 3;
+        stats.avgVisione += p.visione_gioco || 3;
         stats.avgCorsa += p.corsa || 3;
         stats.avgPossesso += p.possesso || 3;
-        stats.avgForma += p.formaFisica || 3;
+        stats.avgForma += p.forma_fisica || 3;
     });
 
     stats.avgRating = Math.round(stats.totalRating / players.length * 10) / 10;
@@ -179,8 +179,8 @@ export function checkRoleBalance(players) {
     };
 
     players.forEach(p => {
-        if (p.ruoloPrincipale && roles[p.ruoloPrincipale] !== undefined) {
-            roles[p.ruoloPrincipale]++;
+        if (p.ruolo_principale && roles[p.ruolo_principale] !== undefined) {
+            roles[p.ruolo_principale]++;
         }
     });
 

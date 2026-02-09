@@ -13,7 +13,8 @@ import {
     STATI,
     RISPOSTE,
     TIPOLOGIE,
-    getMatchIdentifier
+    getMatchIdentifier,
+    getMatchWithDetails
 } from '../matches.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { createBalancedTeams, calculateBalance, getTeamStats } from '../teams.js';
@@ -64,9 +65,9 @@ export async function renderMatches(container, state) {
                             ${match.stato === STATI.CHIUSA ? `
                                 <div style="text-align: center;">
                                     <div style="font-size: var(--font-size-2xl); font-weight: 700;">
-                                        <span style="color: var(--color-team-red-dark);">${match.golRossi}</span>
+                                        <span style="color: var(--color-team-red-dark);">${match.gol_rossi}</span>
                                         <span style="color: var(--color-text-muted);"> - </span>
-                                        <span style="color: var(--color-team-blue-dark);">${match.golBlu}</span>
+                                        <span style="color: var(--color-team-blue-dark);">${match.gol_blu}</span>
                                     </div>
                                 </div>
                             ` : `
@@ -103,7 +104,7 @@ export async function renderMatches(container, state) {
 }
 
 export async function renderMatchModal(matchId) {
-    const match = await db.getById('matches', matchId);
+    const match = await getMatchWithDetails(matchId);
     if (!match) {
         showToast('Partita non trovata', 'error');
         return;
@@ -559,7 +560,7 @@ export function renderMatchForm(match) {
                 // Find max number
                 let maxNum = 0;
                 yearMatches.forEach(m => {
-                    if (m.numeroPartita && m.numeroPartita > maxNum) maxNum = m.numeroPartita;
+                    if (m.numero_partita && m.numero_partita > maxNum) maxNum = m.numero_partita;
                 });
 
                 // If no explicit numbers found, count existing + 1 (fallback)
@@ -569,17 +570,13 @@ export function renderMatchForm(match) {
 
                 await db.add('matches', {
                     ...data,
-                    numeroPartita: maxNum + 1,
+                    numero_partita: maxNum + 1,
                     stato: STATI.CREATA,
-                    convocazioni: {},
-                    convocatiIds: [],
-                    squadraRossa: [],
-                    squadraBlu: []
                 });
                 showToast('Partita creata!', 'success');
             }
 
-            const updatedMatches = await db.getAll('matches');
+            const updatedMatches = await getAllMatches();
             store.setState({ matches: updatedMatches });
             closeModal();
 
@@ -656,9 +653,8 @@ function renderConvocationModal(match, players) {
         });
 
         try {
-            await db.update('matches', match.id, { convocatiIds: newConvocatiIds, convocazioni });
-            const updatedMatches = await db.getAll('matches');
-            store.setState({ matches: updatedMatches });
+            await updateConvocations(match.id, newConvocatiIds, convocazioni);
+            await getAllMatches();
             showToast('Convocazioni salvate!', 'success');
             closeModal();
         } catch (error) {
@@ -869,13 +865,11 @@ function renderTeamBuilder(match, players, matches) {
         }
 
         try {
+            await updateTeams(match.id, assignments.rossi, assignments.blu);
             await db.update('matches', match.id, {
-                squadraRossa: assignments.rossi,
-                squadraBlu: assignments.blu,
                 stato: STATI.SQUADRE_GENERATE
             });
-            const updatedMatches = await db.getAll('matches');
-            store.setState({ matches: updatedMatches });
+            await getAllMatches();
             showToast('Squadre salvate!', 'success');
             closeModal();
         } catch (error) {
@@ -902,13 +896,13 @@ function renderResultsForm(match, players) {
             <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--spacing-4); align-items: center; margin-bottom: var(--spacing-6);">
                 <div style="text-align: center;">
                     <div style="color: var(--color-team-red-dark); font-weight: 700; margin-bottom: var(--spacing-2);">ROSSI</div>
-                    <input type="number" id="rf-gol-rossi" value="${match.golRossi ?? ''}" min="0" max="99" 
+                    <input type="number" id="rf-gol-rossi" value="${match.gol_rossi ?? ''}" min="0" max="99" 
                            style="width: 80px; font-size: var(--font-size-2xl); text-align: center; font-weight: 700;">
                 </div>
                 <div style="font-size: var(--font-size-xl); color: var(--color-text-muted);">-</div>
                 <div style="text-align: center;">
                     <div style="color: var(--color-team-blue-dark); font-weight: 700; margin-bottom: var(--spacing-2);">BLU</div>
-                    <input type="number" id="rf-gol-blu" value="${match.golBlu ?? ''}" min="0" max="99"
+                    <input type="number" id="rf-gol-blu" value="${match.gol_blu ?? ''}" min="0" max="99"
                            style="width: 80px; font-size: var(--font-size-2xl); text-align: center; font-weight: 700;">
                 </div>
             </div>
@@ -918,7 +912,7 @@ function renderResultsForm(match, players) {
                 <select id="rf-mvp-rossi">
                     <option value="">Seleziona...</option>
                     ${rossiPlayers.map(p => `
-                        <option value="${p.id}" ${match.mvpRossi === p.id ? 'selected' : ''} style="color: var(--color-team-red-dark); font-weight: bold;">
+                        <option value="${p.id}" ${match.mvp_rossi === p.id ? 'selected' : ''} style="color: var(--color-team-red-dark); font-weight: bold;">
                             ${getPlayerDisplayName(p)}
                         </option>
                     `).join('')}
@@ -930,7 +924,7 @@ function renderResultsForm(match, players) {
                 <select id="rf-mvp-blu">
                     <option value="">Seleziona...</option>
                     ${bluPlayers.map(p => `
-                        <option value="${p.id}" ${match.mvpBlu === p.id ? 'selected' : ''} style="color: var(--color-team-blue-dark); font-weight: bold;">
+                        <option value="${p.id}" ${match.mvp_blu === p.id ? 'selected' : ''} style="color: var(--color-team-blue-dark); font-weight: bold;">
                             ${getPlayerDisplayName(p)}
                         </option>
                     `).join('')}
@@ -1037,25 +1031,23 @@ function renderResultsForm(match, players) {
 
         try {
             await db.update('matches', match.id, {
-                golRossi,
-                golBlu,
-                mvpRossi,
-                mvpBlu,
+                gol_rossi: golRossi,
+                gol_blu: golBlu,
+                mvp_rossi: mvpRossi,
+                mvp_blu: mvpBlu,
                 marcatori,
                 cartellini,
                 stato: STATI.CHIUSA
             });
 
             // Update player stats
-            const updatedMatch = await db.getById('matches', match.id);
+            const updatedMatch = await getMatchWithDetails(match.id);
             await updatePlayerStats(updatedMatch, players);
 
             // Refresh data
-            const [updatedMatches, updatedPlayers] = await Promise.all([
-                db.getAll('matches'),
-                db.getAll('players')
-            ]);
-            store.setState({ matches: updatedMatches, players: updatedPlayers });
+            await getAllMatches();
+            const updatedPlayers = await db.getAll('players');
+            store.setState({ players: updatedPlayers });
 
             showToast('Partita chiusa!', 'success');
             closeModal();

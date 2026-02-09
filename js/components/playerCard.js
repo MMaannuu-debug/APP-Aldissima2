@@ -45,11 +45,11 @@ export async function renderPlayers(container, state) {
                             </div>
                             <div class="player-info">
                                 <div class="player-name">${getPlayerDisplayName(player)}</div>
-                                <div class="player-role">${getRoleLabel(player.ruoloPrincipale)}</div>
+                                <div class="player-role">${getRoleLabel(player.ruolo_principale)}</div>
                             </div>
                             ${isAdmin ? `
                                 <div class="player-rating">
-                                    ${renderStars(player.valutazioneGenerale || 3)}
+                                    ${renderStars(player.valutazione_generale || 3)}
                                 </div>
                             ` : ''}
                             ${player.bloccato ? '<span style="color: var(--color-error);">🔒</span>' : ''}
@@ -110,15 +110,15 @@ export async function renderPlayerModal(playerId) {
                     <div class="stat-label">Presenze</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${player.golSegnati || 0}</div>
+                    <div class="stat-value">${player.gol_segnati || 0}</div>
                     <div class="stat-label">Gol</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${player.puntiMVP || 0}</div>
+                    <div class="stat-value">${player.punti_mvp || 0}</div>
                     <div class="stat-label">Punti MVP</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${player.partiteVinte || 0}</div>
+                    <div class="stat-value">${player.partite_vinte || 0}</div>
                     <div class="stat-label">Vittorie</div>
                 </div>
             </div>
@@ -126,12 +126,12 @@ export async function renderPlayerModal(playerId) {
             <div style="margin-bottom: var(--spacing-4);">
                 <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
                     <span style="color: var(--color-text-secondary);">Ruolo principale</span>
-                    <span style="font-weight: 500;">${getRoleLabel(player.ruoloPrincipale)}</span>
+                    <span style="font-weight: 500;">${getRoleLabel(player.ruolo_principale)}</span>
                 </div>
-                ${player.ruoloSecondario ? `
+                ${player.ruolo_secondario ? `
                     <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
                         <span style="color: var(--color-text-secondary);">Ruolo secondario</span>
-                        <span style="font-weight: 500;">${getRoleLabel(player.ruoloSecondario)}</span>
+                        <span style="font-weight: 500;">${getRoleLabel(player.ruolo_secondario)}</span>
                     </div>
                 ` : ''}
                 <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
@@ -146,11 +146,11 @@ export async function renderPlayerModal(playerId) {
                     <div style="display: grid; gap: var(--spacing-2);">
                         <div style="display: flex; justify-content: space-between;">
                             <span>Valutazione generale</span>
-                            <span>${renderStars(player.valutazioneGenerale || 3)}</span>
+                            <span>${renderStars(player.valutazione_generale || 3)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Visione di gioco</span>
-                            <span>${renderStars(player.visioneGioco || 3)}</span>
+                            <span>${renderStars(player.visione_gioco || 3)}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Corsa</span>
@@ -162,7 +162,7 @@ export async function renderPlayerModal(playerId) {
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Forma fisica</span>
-                            <span>${renderStars(player.formaFisica || 3)}</span>
+                            <span>${renderStars(player.forma_fisica || 3)}</span>
                         </div>
                     </div>
                 </div>
@@ -225,7 +225,7 @@ export function renderPlayerForm(player) {
                     <label>Ruolo principale</label>
                     <select id="pf-ruolo1">
                         ${RUOLI.map(r => `
-                            <option value="${r.value}" ${player?.ruoloPrincipale === r.value ? 'selected' : ''}>
+                            <option value="${r.value}" ${player?.ruolo_principale === r.value ? 'selected' : ''}>
                                 ${r.label}
                             </option>
                         `).join('')}
@@ -236,7 +236,7 @@ export function renderPlayerForm(player) {
                     <select id="pf-ruolo2">
                         <option value="">Nessuno</option>
                         ${RUOLI.map(r => `
-                            <option value="${r.value}" ${player?.ruoloSecondario === r.value ? 'selected' : ''}>
+                            <option value="${r.value}" ${player?.ruolo_secondario === r.value ? 'selected' : ''}>
                                 ${r.label}
                             </option>
                         `).join('')}
@@ -246,7 +246,7 @@ export function renderPlayerForm(player) {
                 ${isAdmin || isSelf ? `
                     <div class="form-group">
                         <label>Nuova password (4 cifre)</label>
-                        <input type="${isAdmin ? 'text' : 'password'}" id="pf-password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" placeholder="Lascia vuoto per non cambiare" value="${isAdmin && isEdit ? player.password : ''}">
+                        <input type="${isAdmin ? 'text' : 'password'}" id="pf-password" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" placeholder="Lascia vuoto per non cambiare" value="${isAdmin && isEdit ? player.password_numeric : ''}">
                     </div>
                 ` : ''}
                 
@@ -268,11 +268,11 @@ export function renderPlayerForm(player) {
                     </div>
                     
                     <h4 style="margin: var(--spacing-4) 0 var(--spacing-3);">Valutazioni</h4>
-                    ${renderRatingInput('Valutazione generale', 'pf-val-gen', player?.valutazioneGenerale || 3)}
-                    ${renderRatingInput('Visione di gioco', 'pf-visione', player?.visioneGioco || 3)}
+                    ${renderRatingInput('Valutazione generale', 'pf-val-gen', player?.valutazione_generale || 3)}
+                    ${renderRatingInput('Visione di gioco', 'pf-visione', player?.visione_gioco || 3)}
                     ${renderRatingInput('Corsa', 'pf-corsa', player?.corsa || 3)}
                     ${renderRatingInput('Possesso', 'pf-possesso', player?.possesso || 3)}
-                    ${renderRatingInput('Forma fisica', 'pf-forma', player?.formaFisica || 3)}
+                    ${renderRatingInput('Forma fisica', 'pf-forma', player?.forma_fisica || 3)}
                 ` : ''}
                 
                 <div class="form-group">
@@ -339,8 +339,8 @@ function setupPlayerFormHandlers(existingPlayer) {
             soprannome: document.getElementById('pf-soprannome').value.trim(),
             telefono: document.getElementById('pf-telefono').value.trim(),
             email: document.getElementById('pf-email').value.trim(),
-            ruoloPrincipale: document.getElementById('pf-ruolo1').value,
-            ruoloSecondario: document.getElementById('pf-ruolo2').value
+            ruolo_principale: document.getElementById('pf-ruolo1').value,
+            ruolo_secondario: document.getElementById('pf-ruolo2').value
         };
 
         // Password
@@ -350,18 +350,18 @@ function setupPlayerFormHandlers(existingPlayer) {
                 showToast('La password deve essere di 4 cifre', 'error');
                 return;
             }
-            data.password = newPassword;
+            data.password_numeric = newPassword;
         }
 
         // Admin fields
         if (isAdmin) {
             data.tipologia = document.getElementById('pf-tipologia')?.value || 'riserva';
             data.ruolo = document.getElementById('pf-ruolo-utente')?.value || 'operatore';
-            data.valutazioneGenerale = parseInt(document.getElementById('pf-val-gen-value')?.value) || 3;
-            data.visioneGioco = parseInt(document.getElementById('pf-visione-value')?.value) || 3;
+            data.valutazione_generale = parseInt(document.getElementById('pf-val-gen-value')?.value) || 3;
+            data.visione_gioco = parseInt(document.getElementById('pf-visione-value')?.value) || 3;
             data.corsa = parseInt(document.getElementById('pf-corsa-value')?.value) || 3;
             data.possesso = parseInt(document.getElementById('pf-possesso-value')?.value) || 3;
-            data.formaFisica = parseInt(document.getElementById('pf-forma-value')?.value) || 3;
+            data.forma_fisica = parseInt(document.getElementById('pf-forma-value')?.value) || 3;
         }
 
         // Photo
@@ -387,7 +387,7 @@ function setupPlayerFormHandlers(existingPlayer) {
                 await db.update('players', existingPlayer.id, data);
                 showToast('Giocatore aggiornato!', 'success');
             } else {
-                data.password = data.password || '0000';
+                data.password_numeric = data.password_numeric || '0000';
                 await db.add('players', data);
                 showToast('Giocatore creato!', 'success');
             }
