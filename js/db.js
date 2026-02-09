@@ -3,8 +3,8 @@
 // ================================
 
 // Supabase configuration - Replace with your own project details
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://vuulkmhumulwpqtjbdmi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1dWxrbWh1bXVsd3BxdGpiZG1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NjQ3MDUsImV4cCI6MjA4NjIzMDcwNX0.DynPynn3rZaUk3EXn0KSHqf4lXga3jI3Jn3CsdEpRyE';
 
 // Initialize Supabase
 let supabase = null;

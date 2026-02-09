@@ -37,9 +37,9 @@ export const RISPOSTE = {
 // ================================
 
 export async function getAllMatches() {
-    if (!db.getClient) return await db.getAll(COLLECTION);
+    const supabase = typeof db.getClient === 'function' ? db.getClient() : null;
+    if (!supabase) return await db.getAll(COLLECTION);
 
-    const supabase = db.getClient();
     // Fetch matches with related convocations and teams
     const { data: matches, error } = await supabase
         .from(COLLECTION)
@@ -132,7 +132,7 @@ export async function updateTeams(matchId, squadraRossa, squadraBlu) {
 }
 
 export async function getMatchWithDetails(id) {
-    const supabase = db.getClient();
+    const supabase = typeof db.getClient === 'function' ? db.getClient() : null;
     if (!supabase) return await db.getById(COLLECTION, id);
 
     const { data: match, error } = await supabase
