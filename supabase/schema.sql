@@ -139,16 +139,16 @@ CREATE POLICY "Allow any response update" ON public.match_convocations FOR UPDAT
 
 -- 4. BROAD PERMISSIVE POLICIES (For development/anon access)
 DROP POLICY IF EXISTS "Allow management for matches" ON public.matches;
-CREATE POLICY "Allow management for matches" ON public.matches FOR ALL USING (true);
+CREATE POLICY "Allow management for matches" ON public.matches FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow management for match_convocations" ON public.match_convocations;
-CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true);
+CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow management for match_teams" ON public.match_teams;
-CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true);
+CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true) WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow management for match_events" ON public.match_events;
-CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true);
+CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true) WITH CHECK (true);
 
 -- ==========================================
 -- TRIGGERS & FUNCTIONS

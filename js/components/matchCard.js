@@ -590,30 +590,30 @@ export function renderMatchForm(match) {
                 location.reload();
             }, 1000);
 
-            if (matchIdToRefresh || match?.id) {
-                renderMatchModal(matchIdToRefresh || match.id);
-            } else {
-                closeModal();
-            }
-        } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
-        }
-    });
-
-    // Delete handler
-    document.getElementById('delete-match-btn')?.addEventListener('click', async () => {
-        if (!confirm('Sei sicuro di voler eliminare questa partita?')) return;
-
-        try {
-            await db.delete('matches', match.id);
-            const updatedMatches = await db.getAll('matches');
-            store.setState({ matches: updatedMatches });
-            showToast('Partita eliminata', 'success');
+        } else {
             closeModal();
-        } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
         }
-    });
+    } catch (error) {
+        console.error('Save match error:', error);
+        showToast('Errore Salvataggio: ' + error.message, 'error');
+        alert('Errore Critico: ' + error.message); // Fallback for visibility
+    }
+});
+
+// Delete handler
+document.getElementById('delete-match-btn')?.addEventListener('click', async () => {
+    if (!confirm('Sei sicuro di voler eliminare questa partita?')) return;
+
+    try {
+        await db.delete('matches', match.id);
+        const updatedMatches = await db.getAll('matches');
+        store.setState({ matches: updatedMatches });
+        showToast('Partita eliminata', 'success');
+        closeModal();
+    } catch (error) {
+        showToast('Errore: ' + error.message, 'error');
+    }
+});
 }
 
 // ================================
