@@ -348,7 +348,7 @@ export async function closeMatch(matchId) {
         throw new Error('Inserisci il risultato prima di chiudere');
     }
 
-    if (!match.mvpRossi || !match.mvpBlu) {
+    if (!match.mvp_rossi || !match.mvp_blu) {
         throw new Error('Seleziona gli MVP prima di chiudere');
     }
 
@@ -418,10 +418,10 @@ export function isPlayerConvoked(match, playerId) {
 }
 
 export function getMatchResult(match) {
-    if (match.golRossi === null || match.golBlu === null) return null;
+    if (match.gol_rossi === null || match.gol_blu === null) return null;
 
-    if (match.golRossi > match.golBlu) return 'rossi';
-    if (match.golBlu > match.golRossi) return 'blu';
+    if (match.gol_rossi > match.gol_blu) return 'rossi';
+    if (match.gol_blu > match.gol_rossi) return 'blu';
     return 'pareggio';
 }
 

@@ -134,10 +134,12 @@ export async function renderPlayerModal(playerId) {
                         <span style="font-weight: 500;">${getRoleLabel(player.ruolo_secondario)}</span>
                     </div>
                 ` : ''}
-                <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
-                    <span style="color: var(--color-text-secondary);">Tipologia</span>
-                    <span style="font-weight: 500;">${player.tipologia === 'titolare' ? 'Titolare' : 'Riserva'}</span>
-                </div>
+                ${isAdmin ? `
+                    <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
+                        <span style="color: var(--color-text-secondary);">Tipologia</span>
+                        <span style="font-weight: 500;">${player.tipologia === 'titolare' ? 'Titolare' : 'Riserva'}</span>
+                    </div>
+                ` : ''}
             </div>
             
             ${isAdmin ? `
@@ -146,23 +148,23 @@ export async function renderPlayerModal(playerId) {
                     <div style="display: grid; gap: var(--spacing-2);">
                         <div style="display: flex; justify-content: space-between;">
                             <span>Valutazione generale</span>
-                            <span>${renderStars(player.valutazione_generale || 3)}</span>
+                            <div class="player-rating">${renderStars(player.valutazione_generale || 3)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Visione di gioco</span>
-                            <span>${renderStars(player.visione_gioco || 3)}</span>
+                            <div class="player-rating">${renderStars(player.visione_gioco || 3)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Corsa</span>
-                            <span>${renderStars(player.corsa || 3)}</span>
+                            <div class="player-rating">${renderStars(player.corsa || 3)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Possesso</span>
-                            <span>${renderStars(player.possesso || 3)}</span>
+                            <div class="player-rating">${renderStars(player.possesso || 3)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Forma fisica</span>
-                            <span>${renderStars(player.forma_fisica || 3)}</span>
+                            <div class="player-rating">${renderStars(player.forma_fisica || 3)}</div>
                         </div>
                     </div>
                 </div>

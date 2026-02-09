@@ -443,7 +443,7 @@ function setupMatchModalHandlers(match, players, matches) {
             const updatedMatches = await db.getAll('matches');
             store.setState({ matches: updatedMatches });
             showToast('Squadre pubblicate!', 'success');
-            closeModal();
+            renderMatchModal(match.id); // Refresh modal
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -460,7 +460,7 @@ function setupMatchModalHandlers(match, players, matches) {
             const updatedMatches = await db.getAll('matches');
             store.setState({ matches: updatedMatches });
             showToast('Squadre resettate', 'success');
-            closeModal();
+            renderMatchModal(match.id); // Refresh modal
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -579,13 +579,13 @@ export function renderMatchForm(match) {
                     numero_partita: maxNum + 1,
                     stato: STATI.CREATA,
                 });
+                id = newMatch.id;
                 showToast('Partita creata!', 'success');
             }
 
             const updatedMatches = await getAllMatches();
             store.setState({ matches: updatedMatches });
-            closeModal();
-
+            renderMatchModal(id || match.id); // Refresh modal or list
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -663,7 +663,7 @@ function renderConvocationModal(match, players) {
             await updateConvocations(match.id, newConvocatiIds, convocazioni);
             await getAllMatches();
             showToast('Convocazioni salvate!', 'success');
-            closeModal();
+            renderMatchModal(match.id); // Refresh modal
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -878,7 +878,7 @@ function renderTeamBuilder(match, players, matches) {
             });
             await getAllMatches();
             showToast('Squadre salvate!', 'success');
-            closeModal();
+            renderMatchModal(match.id); // Refresh modal
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -984,12 +984,12 @@ function renderResultsForm(match, players) {
 
     // Save results
     document.getElementById('save-results-btn').addEventListener('click', async () => {
-        const golRossi = parseInt(document.getElementById('rf-gol-rossi').value);
-        const golBlu = parseInt(document.getElementById('rf-gol-blu').value);
-        const mvpRossi = document.getElementById('rf-mvp-rossi').value;
-        const mvpBlu = document.getElementById('rf-mvp-blu').value;
+        const gol_rossi = parseInt(document.getElementById('rf-gol-rossi').value) || 0;
+        const gol_blu = parseInt(document.getElementById('rf-gol-blu').value) || 0;
+        const mvp_rossi = document.getElementById('rf-mvp-rossi').value;
+        const mvp_blu = document.getElementById('rf-mvp-blu').value;
 
-        if (isNaN(golRossi) || isNaN(golBlu)) {
+        if (isNaN(gol_rossi) || isNaN(gol_blu)) {
             showToast('Inserisci il risultato', 'error');
             return;
         }
@@ -1022,13 +1022,13 @@ function renderResultsForm(match, players) {
         });
 
         // Validation: Check if scorer goals exceed match result
-        if (scorersRossiGoals > golRossi) {
-            showToast(`Errore: I marcatori Rossi hanno segnato ${scorersRossiGoals} gol, ma il risultato è ${golRossi}`, 'error');
+        if (scorersRossiGoals > gol_rossi) {
+            showToast(`Errore: I marcatori Rossi hanno segnato ${scorersRossiGoals} gol, ma il risultato è ${gol_rossi}`, 'error');
             return;
         }
 
-        if (scorersBluGoals > golBlu) {
-            showToast(`Errore: I marcatori Blu hanno segnato ${scorersBluGoals} gol, ma il risultato è ${golBlu}`, 'error');
+        if (scorersBluGoals > gol_blu) {
+            showToast(`Errore: I marcatori Blu hanno segnato ${scorersBluGoals} gol, ma il risultato è ${gol_blu}`, 'error');
             return;
         }
 
@@ -1038,10 +1038,10 @@ function renderResultsForm(match, players) {
 
         try {
             await db.update('matches', match.id, {
-                gol_rossi: golRossi,
-                gol_blu: golBlu,
-                mvp_rossi: mvpRossi,
-                mvp_blu: mvpBlu,
+                gol_rossi: gol_rossi,
+                gol_blu: gol_blu,
+                mvp_rossi: mvp_rossi,
+                mvp_blu: mvp_blu,
                 marcatori,
                 cartellini,
                 stato: STATI.CHIUSA
@@ -1057,7 +1057,7 @@ function renderResultsForm(match, players) {
             store.setState({ players: updatedPlayers });
 
             showToast('Partita chiusa!', 'success');
-            closeModal();
+            renderMatchModal(match.id); // Refresh modal
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }

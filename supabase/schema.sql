@@ -54,6 +54,8 @@ CREATE TABLE IF NOT EXISTS public.matches (
     mvp_blu UUID REFERENCES public.players(id),
     pronostico TEXT,
     numero_partita INTEGER, -- Serial number within the year
+    marcatori JSONB DEFAULT '[]',
+    cartellini JSONB DEFAULT '[]',
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
