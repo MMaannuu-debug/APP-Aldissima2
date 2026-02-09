@@ -555,7 +555,6 @@ export function renderMatchForm(match) {
         try {
             if (isEdit) {
                 await db.update('matches', match.id, data);
-                showToast('Partita aggiornata!', 'success');
             } else {
                 // Calculate next progressive number for the year
                 const year = new Date(data.data).getFullYear();
@@ -578,27 +577,28 @@ export function renderMatchForm(match) {
                     numero_partita: maxNum + 1,
                     stato: STATI.CREATA,
                 });
-                const updatedMatches = await getAllMatches();
-                store.setState({ matches: updatedMatches });
-
-                showToast(isEdit ? 'Partita aggiornata!' : 'Partita creata!', 'success');
-
-                // Force reload to update list and ensure all states are clean
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-
-                if (matchIdToRefresh || match?.id) {
-                    // Pre-render the modal content so it's there if needed, 
-                    // but the reload will take over.
-                    renderMatchModal(matchIdToRefresh || match.id);
-                } else {
-                    closeModal();
-                }
-            } catch (error) {
-                showToast('Errore: ' + error.message, 'error');
+                matchIdToRefresh = newMatch.id;
             }
-        });
+
+            const updatedMatches = await getAllMatches();
+            store.setState({ matches: updatedMatches });
+
+            showToast(isEdit ? 'Partita aggiornata!' : 'Partita creata!', 'success');
+
+            // Force reload to update list and ensure all states are clean
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+
+            if (matchIdToRefresh || match?.id) {
+                renderMatchModal(matchIdToRefresh || match.id);
+            } else {
+                closeModal();
+            }
+        } catch (error) {
+            showToast('Errore: ' + error.message, 'error');
+        }
+    });
 
     // Delete handler
     document.getElementById('delete-match-btn')?.addEventListener('click', async () => {
