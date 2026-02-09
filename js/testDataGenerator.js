@@ -140,7 +140,7 @@ export async function generateTestMatches(count = 10) {
     const { getMatchWithDetails } = await import('./matches.js');
 
     for (const m of allMatches) {
-        if (m.stato === 'chiusa') {
+        if (m.stato === STATI.CHIUSA) {
             const richMatch = await getMatchWithDetails(m.id);
             const currentPlayers = await db.getAll('players');
             await updatePlayerStats(richMatch, currentPlayers);

@@ -45,7 +45,7 @@ export async function updatePlayerStats(match, players) {
 
         // Get goals for this player
         const playerGoals = (match.marcatori || [])
-            .filter(m => m.player_id === playerId)
+            .filter(m => m.playerId === playerId)
             .reduce((sum, m) => sum + (m.gol || 1), 0);
 
         // Get yellow cards
