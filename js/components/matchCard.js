@@ -451,10 +451,11 @@ function setupMatchModalHandlers(match, players, matches) {
 
     // Reset teams
     document.getElementById('reset-teams-btn')?.addEventListener('click', async () => {
+        if (!confirm('Sei sicuro di voler resettare le squadre?')) return;
         try {
             await db.update('matches', match.id, {
-                squadraRossa: [],
-                squadraBlu: [],
+                squadra_rossa: [],
+                squadra_blu: [],
                 stato: STATI.COMPLETA
             });
             const updatedMatches = await db.getAll('matches');
@@ -541,6 +542,7 @@ export function renderMatchForm(match) {
 
     // Save handler
     document.getElementById('save-match-btn').addEventListener('click', async () => {
+        let matchIdToRefresh = null;
         const data = {
             data: document.getElementById('mf-data').value,
             orario: document.getElementById('mf-orario').value,
@@ -574,18 +576,18 @@ export function renderMatchForm(match) {
                     maxNum = yearMatches.length;
                 }
 
-                await db.add('matches', {
+                const newMatch = await db.add('matches', {
                     ...data,
                     numero_partita: maxNum + 1,
                     stato: STATI.CREATA,
                 });
-                id = newMatch.id;
+                matchIdToRefresh = newMatch.id;
                 showToast('Partita creata!', 'success');
             }
 
             const updatedMatches = await getAllMatches();
             store.setState({ matches: updatedMatches });
-            renderMatchModal(id || match.id); // Refresh modal or list
+            renderMatchModal(matchIdToRefresh || match.id); // Refresh modal or list
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -994,7 +996,7 @@ function renderResultsForm(match, players) {
             return;
         }
 
-        if (!mvpRossi || !mvpBlu) {
+        if (!mvp_rossi || !mvp_blu) {
             showToast('Seleziona gli MVP', 'error');
             return;
         }
