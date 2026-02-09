@@ -80,7 +80,7 @@ export async function generateTestMatches(count = 10) {
 
         const marcatori = [];
         // Assign random goals
-        const totalGoals = golRossi + gol_blu;
+        const totalGoals = golRossi + golBlu;
         for (let g = 0; g < totalGoals; g++) {
             const scorerId = selected[Math.floor(Math.random() * selected.length)].id;
             marcatori.push({ player_id: scorerId, gol: 1 });
