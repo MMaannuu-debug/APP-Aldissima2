@@ -37,9 +37,9 @@ export function initDatabase() {
 export const supabaseDB = {
     async getAll(table) {
         if (!supabase) return localDB.getAll(table);
-        const { data, error } = await supabase.from(table).select('*');
+        const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
         if (error) throw error;
-        return data;
+        return data || [];
     },
 
     async getById(table, id) {
@@ -51,7 +51,7 @@ export const supabaseDB = {
 
     async add(table, data) {
         if (!supabase) return localDB.add(table, data);
-        const { data: inserted, error } = await supabase.from(table).insert([data]).select().single();
+        const { data: inserted, error } = await supabase.from(table).insert([data]).select('*').single();
         if (error) throw error;
         return inserted;
     },

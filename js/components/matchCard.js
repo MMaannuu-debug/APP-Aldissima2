@@ -559,8 +559,8 @@ export function renderMatchForm(match) {
             } else {
                 // Calculate next progressive number for the year
                 const year = new Date(data.data).getFullYear();
-                const allMatches = await db.getAll('matches');
-                const yearMatches = allMatches.filter(m => new Date(m.data).getFullYear() === year);
+                const allMatches = await db.getAll('matches') || [];
+                const yearMatches = allMatches.filter(m => m.data && new Date(m.data).getFullYear() === year);
 
                 // Find max number
                 let maxNum = 0;
@@ -584,7 +584,12 @@ export function renderMatchForm(match) {
 
             const updatedMatches = await getAllMatches();
             store.setState({ matches: updatedMatches });
-            renderMatchModal(matchIdToRefresh || match?.id); // Refresh modal or list
+
+            if (matchIdToRefresh || match?.id) {
+                renderMatchModal(matchIdToRefresh || match.id);
+            } else {
+                closeModal();
+            }
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
