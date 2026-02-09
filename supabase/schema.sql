@@ -108,9 +108,9 @@ ALTER TABLE public.match_teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.match_events ENABLE ROW LEVEL SECURITY;
 
 -- 1. PLAYERS POLICIES
--- Everyone authenticated can see players
-CREATE POLICY "Public players are viewable by everyone authenticated" 
-ON public.players FOR SELECT TO authenticated USING (true);
+-- Everyone can see players (needed for login check)
+CREATE POLICY "Public players are viewable by everyone" 
+ON public.players FOR SELECT USING (true);
 
 -- Players can only update their own profile (subset of fields)
 CREATE POLICY "Users can update own profile" 
@@ -125,9 +125,9 @@ USING (
 );
 
 -- 2. MATCHES POLICIES
--- Everyone authenticated can see matches
-CREATE POLICY "Matches are viewable by everyone authenticated" 
-ON public.matches FOR SELECT TO authenticated USING (true);
+-- Everyone can see matches
+CREATE POLICY "Matches are viewable by everyone" 
+ON public.matches FOR SELECT USING (true);
 
 -- Admins and Supervisors can manage matches
 CREATE POLICY "Admins and Supervisors can manage matches" 
@@ -137,32 +137,23 @@ USING (
 );
 
 -- 3. CONVOCATIONS POLICIES
--- Everyone authenticated can see convocations
-CREATE POLICY "Convocations are viewable by everyone authenticated" 
-ON public.match_convocations FOR SELECT TO authenticated USING (true);
+-- Everyone can see convocations
+CREATE POLICY "Convocations are viewable by everyone" 
+ON public.match_convocations FOR SELECT USING (true);
 
--- Users can update their own response
-CREATE POLICY "Users can respond to their own convocation" 
-ON public.match_convocations FOR UPDATE TO authenticated 
-USING (auth.uid() = player_id)
-WITH CHECK (auth.uid() = player_id);
+-- Allow anon updates for now (since app uses logic-based auth)
+CREATE POLICY "Allow any response update" 
+ON public.match_convocations FOR UPDATE USING (true) WITH CHECK (true);
 
--- Admins can manage all convocations
-CREATE POLICY "Admins can manage all convocations" 
-ON public.match_convocations FOR ALL TO authenticated 
-USING (
-    EXISTS (SELECT 1 FROM public.players WHERE id = auth.uid() AND ruolo = 'admin')
-);
+-- Allow all for matches and sub-tables to make it work without Supabase Auth for now
+CREATE POLICY "Allow management for matches" ON public.matches FOR ALL USING (true);
+CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true);
+CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true);
+CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true);
 
 -- 4. TEAMS POLICIES
-CREATE POLICY "Teams are viewable by everyone authenticated" 
-ON public.match_teams FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Admins and Supervisors can manage teams" 
-ON public.match_teams FOR ALL TO authenticated 
-USING (
-    EXISTS (SELECT 1 FROM public.players WHERE id = auth.uid() AND ruolo IN ('admin', 'supervisore'))
-);
+CREATE POLICY "Teams are viewable by everyone" 
+ON public.match_teams FOR SELECT USING (true);
 
 -- 5. EVENTS POLICIES
 CREATE POLICY "Events are viewable by everyone authenticated" 
