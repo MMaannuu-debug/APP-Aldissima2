@@ -153,19 +153,8 @@ CREATE POLICY "Allow management for match_convocations" ON public.match_convocat
 CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true);
 CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true);
 
--- 4. TEAMS POLICIES
-CREATE POLICY "Teams are viewable by everyone" 
-ON public.match_teams FOR SELECT USING (true);
-
 -- 5. EVENTS POLICIES
-CREATE POLICY "Events are viewable by everyone authenticated" 
-ON public.match_events FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Admins can manage match events" 
-ON public.match_events FOR ALL TO authenticated 
-USING (
-    EXISTS (SELECT 1 FROM public.players WHERE id = auth.uid() AND ruolo = 'admin')
-);
+-- Covered by the broad "Allow management for match_events" policy above
 
 -- ==========================================
 -- TRIGGERS & FUNCTIONS
