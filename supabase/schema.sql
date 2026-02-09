@@ -110,51 +110,45 @@ ALTER TABLE public.match_teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.match_events ENABLE ROW LEVEL SECURITY;
 
 -- 1. PLAYERS POLICIES
--- Everyone can see players (needed for login check)
-CREATE POLICY "Public players are viewable by everyone" 
-ON public.players FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public players are viewable by everyone" ON public.players;
+CREATE POLICY "Public players are viewable by everyone" ON public.players FOR SELECT USING (true);
 
--- Players can only update their own profile (subset of fields)
-CREATE POLICY "Users can update own profile" 
-ON public.players FOR UPDATE TO authenticated 
-USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users can update own profile" ON public.players;
+CREATE POLICY "Users can update own profile" ON public.players FOR UPDATE TO authenticated USING (auth.uid() = id);
 
--- Admins can do anything
-CREATE POLICY "Admins have full access to players" 
-ON public.players TO authenticated 
-USING (
+DROP POLICY IF EXISTS "Admins have full access to players" ON public.players;
+CREATE POLICY "Admins have full access to players" ON public.players TO authenticated USING (
     EXISTS (SELECT 1 FROM public.players WHERE id = auth.uid() AND ruolo = 'admin')
 );
 
 -- 2. MATCHES POLICIES
--- Everyone can see matches
-CREATE POLICY "Matches are viewable by everyone" 
-ON public.matches FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Matches are viewable by everyone" ON public.matches;
+CREATE POLICY "Matches are viewable by everyone" ON public.matches FOR SELECT USING (true);
 
--- Admins and Supervisors can manage matches
-CREATE POLICY "Admins and Supervisors can manage matches" 
-ON public.matches FOR ALL TO authenticated 
-USING (
+DROP POLICY IF EXISTS "Admins and Supervisors can manage matches" ON public.matches;
+CREATE POLICY "Admins and Supervisors can manage matches" ON public.matches FOR ALL TO authenticated USING (
     EXISTS (SELECT 1 FROM public.players WHERE id = auth.uid() AND ruolo IN ('admin', 'supervisore'))
 );
 
 -- 3. CONVOCATIONS POLICIES
--- Everyone can see convocations
-CREATE POLICY "Convocations are viewable by everyone" 
-ON public.match_convocations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Convocations are viewable by everyone" ON public.match_convocations;
+CREATE POLICY "Convocations are viewable by everyone" ON public.match_convocations FOR SELECT USING (true);
 
--- Allow anon updates for now (since app uses logic-based auth)
-CREATE POLICY "Allow any response update" 
-ON public.match_convocations FOR UPDATE USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow any response update" ON public.match_convocations;
+CREATE POLICY "Allow any response update" ON public.match_convocations FOR UPDATE USING (true) WITH CHECK (true);
 
--- Allow all for matches and sub-tables to make it work without Supabase Auth for now
+-- 4. BROAD PERMISSIVE POLICIES (For development/anon access)
+DROP POLICY IF EXISTS "Allow management for matches" ON public.matches;
 CREATE POLICY "Allow management for matches" ON public.matches FOR ALL USING (true);
-CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true);
-CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true);
-CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true);
 
--- 5. EVENTS POLICIES
--- Covered by the broad "Allow management for match_events" policy above
+DROP POLICY IF EXISTS "Allow management for match_convocations" ON public.match_convocations;
+CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow management for match_teams" ON public.match_teams;
+CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow management for match_events" ON public.match_events;
+CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true);
 
 -- ==========================================
 -- TRIGGERS & FUNCTIONS
@@ -170,10 +164,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply to players and matches
+DROP TRIGGER IF EXISTS set_updated_at_players ON public.players;
 CREATE TRIGGER set_updated_at_players
 BEFORE UPDATE ON public.players
 FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_updated_at_matches ON public.matches;
 CREATE TRIGGER set_updated_at_matches
 BEFORE UPDATE ON public.matches
 FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
