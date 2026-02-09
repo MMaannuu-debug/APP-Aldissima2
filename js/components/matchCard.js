@@ -635,7 +635,8 @@ function renderConvocationModal(match, players) {
 
     // Save convocations
     document.getElementById('save-convocations-btn').addEventListener('click', async () => {
-        const items = document.querySelectorAll('.player-item');
+        const modalBody = document.querySelector('.modal-body');
+        const items = modalBody.querySelectorAll('.player-item');
         const newConvocatiIds = [];
         const convocazioni = { ...match.convocazioni };
 

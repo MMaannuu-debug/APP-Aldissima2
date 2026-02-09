@@ -108,11 +108,14 @@ export async function generateTestMatches(count = 10) {
         selected.forEach(p => match.convocazioni[p.id] = RISPOSTE.PRESENTE);
 
         try {
-            await db.add('matches', match);
+            const insertedMatch = await db.add('matches', match);
+            const matchId = insertedMatch.id;
 
-            // Update stats for this match (simplified version of handleMatchClose)
-            // Ideally we should call updatePlayerStats from stats.js but that requires the match to be in store
-            // For now let's just create the match data
+            // Updated for Supabase: use relational functions
+            const { updateConvocations, updateTeams } = await import('./matches.js');
+            await updateConvocations(matchId, selected.map(p => p.id), match.convocazioni);
+            await updateTeams(matchId, squadraRossa, squadraBlu);
+
         } catch (e) {
             console.error('Error adding match', e);
         }
