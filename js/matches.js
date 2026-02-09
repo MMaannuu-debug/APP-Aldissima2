@@ -535,8 +535,8 @@ export function getMatchIdentifier(match, allMatches) {
     const year = date.getFullYear();
 
     // If already has number, use it
-    if (match.numeroPartita) {
-        return `${year}-${String(match.numeroPartita).padStart(2, '0')}`;
+    if (match.numero_partita) {
+        return `${year}-${String(match.numero_partita).padStart(2, '0')}`;
     }
 
     // Otherwise calculate it (fallback/legacy)
