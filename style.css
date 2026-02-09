@@ -673,11 +673,38 @@ body {
 }
 
 .player-rating .star {
-    color: var(--color-warning);
+    color: #ffc107;
+    /* Vibrant Gold/Yellow */
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+    font-size: 1.1em;
 }
 
 .player-rating .star.empty {
     color: var(--color-border);
+    text-shadow: none;
+}
+
+.rating-input {
+    display: flex;
+    gap: var(--spacing-1);
+}
+
+.rating-input button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-border);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.1s;
+}
+
+.rating-input button.active {
+    color: #ffc107;
+}
+
+.rating-input button:hover {
+    transform: scale(1.2);
 }
 
 /* Team assignment colors */

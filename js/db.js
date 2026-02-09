@@ -94,6 +94,29 @@ export const supabaseDB = {
     // Get Raw Client
     getClient() {
         return supabase;
+    },
+
+    async resetDatabase() {
+        if (!supabase) {
+            localStorage.clear();
+            return;
+        }
+
+        const tables = [
+            'match_events',
+            'match_convocations',
+            'match_teams',
+            'matches',
+            'players'
+        ];
+
+        for (const table of tables) {
+            const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) {
+                console.error(`Error resetting table ${table}:`, error);
+                throw error;
+            }
+        }
     }
 };
 

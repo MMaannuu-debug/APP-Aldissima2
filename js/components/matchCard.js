@@ -5,21 +5,18 @@
 import { store } from '../store.js';
 import db from '../db.js';
 import {
-    formatMatchDate,
-    getStateLabel,
-    getPlayerResponse,
-    getConvocationStats,
-    getMaxPlayers,
+    updatePlayerStats,
+    updateConvocations,
+    updateTeams,
+    deleteMatch,
+    getAllMatches,
+    getMatchIdentifier,
+    getMatchWithDetails,
     STATI,
     RISPOSTE,
-    TIPOLOGIE,
-    getMatchIdentifier,
-    getMatchWithDetails
+    TIPOLOGIE
 } from '../matches.js';
-import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
-import { createBalancedTeams, calculateBalance, getTeamStats } from '../teams.js';
-
-import { updatePlayerStats } from '../stats.js';
+import { updatePlayerStats as refreshPlayerStats } from '../stats.js';
 import { showModal, closeModal, showToast } from '../../app.js';
 
 export async function renderMatches(container, state) {
@@ -525,8 +522,11 @@ export function renderMatchForm(match) {
             </form>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" data-action="close-modal">Annulla</button>
-            ${isEdit ? `<button class="btn btn-danger btn-sm" id="delete-match-btn">Elimina</button>` : ''}
+            ${isAdmin ? `<button class="btn btn-danger btn-sm" id="delete-match-btn" style="margin-right: auto;">Elimina</button>` : ''}
+            <button class="btn btn-secondary" data-action="close-modal">Chiudi</button>
+            ${isAdmin && match.stato !== STATI.CHIUSA ? `
+                <button class="btn btn-primary" id="edit-match-btn">Modifica</button>
+            ` : ''}
             <button class="btn btn-primary" id="save-match-btn">Salva</button>
         </div>
     `;

@@ -289,6 +289,7 @@ export function renderPlayerForm(player) {
             </form>
         </div>
         <div class="modal-footer">
+            ${isAdmin && isEdit ? `<button class="btn btn-danger btn-sm" id="delete-player-btn" style="margin-right: auto;">Elimina</button>` : ''}
             <button class="btn btn-secondary" data-action="close-modal">Annulla</button>
             <button class="btn btn-primary" id="save-player-btn">Salva</button>
         </div>
@@ -402,6 +403,25 @@ function setupPlayerFormHandlers(existingPlayer) {
             const container = document.getElementById('main-content');
             renderPlayers(container, store.getState());
 
+        } catch (error) {
+            showToast('Errore: ' + error.message, 'error');
+        }
+    });
+
+    // Delete handler
+    document.getElementById('delete-player-btn')?.addEventListener('click', async () => {
+        if (!confirm(`Sei sicuro di voler eliminare definitivamente ${getPlayerDisplayName(existingPlayer)}?`)) return;
+
+        try {
+            await db.delete('players', existingPlayer.id);
+            const players = await db.getAll('players');
+            store.setState({ players });
+            showToast('Giocatore eliminato', 'success');
+            closeModal();
+
+            // Re-render
+            const container = document.getElementById('main-content');
+            renderPlayers(container, store.getState());
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
