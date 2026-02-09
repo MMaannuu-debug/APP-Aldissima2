@@ -52,6 +52,8 @@ export async function generateTestPlayers(count = 20) {
 export async function generateTestMatches(count = 10) {
     console.log(`Generating ${count} test matches...`);
     const players = store.getState().players;
+    const { updateConvocations, updateTeams, setResults, STATI, RISPOSTE } = await import('./matches.js');
+    const { updatePlayerStats } = await import('./stats.js');
 
     if (players.length < 10) {
         console.error('Not enough players to generate matches');
@@ -63,9 +65,9 @@ export async function generateTestMatches(count = 10) {
     for (let i = 0; i < count; i++) {
         // Date in the past
         const date = new Date(now);
-        date.setDate(date.getDate() - (i + 1) * 7); // One match per week
+        date.setDate(date.getDate() - (i + 1) * 7);
 
-        const tipologia = '5v5'; // Simple 5v5
+        const tipologia = '5v5';
         const maxPlayers = 10;
 
         // Select random players
@@ -75,71 +77,80 @@ export async function generateTestMatches(count = 10) {
         const squadraRossa = selected.slice(0, maxPlayers / 2).map(p => p.id);
         const squadraBlu = selected.slice(maxPlayers / 2, maxPlayers).map(p => p.id);
 
-        const golRossi = Math.floor(Math.random() * 10);
-        const golBlu = Math.floor(Math.random() * 10);
+        const golRossi = Math.floor(Math.random() * 6); // More realistic score
+        const golBlu = Math.floor(Math.random() * 6);
 
-        const marcatori = [];
-        // Assign random goals
-        const totalGoals = golRossi + golBlu;
-        for (let g = 0; g < totalGoals; g++) {
-            const scorerId = selected[Math.floor(Math.random() * selected.length)].id;
-            marcatori.push({ player_id: scorerId, gol: 1 });
-        }
-
-        const match = {
+        // Prepare match core data
+        const matchData = {
             data: date.toISOString().split('T')[0],
             orario: '20:00',
             luogo: 'OGGIONA',
             tipologia: tipologia,
-            stato: STATI.CHIUSA,
-            convocazioni: {},
-            convocatiIds: selected.map(p => p.id),
-            squadraRossa: squadraRossa,
-            squadraBlu: squadraBlu,
-            gol_rossi: golRossi,
-            gol_blu: golBlu,
-            marcatori: marcatori,
-            cartellini: [],
-            mvp_rossi: squadraRossa[Math.floor(Math.random() * squadraRossa.length)],
-            mvp_blu: squadraBlu[Math.floor(Math.random() * squadraBlu.length)]
+            stato: STATI.CREATA,
+            pronostico: 'Gara equilibrata'
         };
 
-        // Set convocations
-        selected.forEach(p => match.convocazioni[p.id] = RISPOSTE.PRESENTE);
-
         try {
-            const insertedMatch = await db.add('matches', match);
+            // 1. Create Match
+            const insertedMatch = await db.add('matches', matchData);
             const matchId = insertedMatch.id;
 
-            // Updated for Supabase: use relational functions
-            const { updateConvocations, updateTeams } = await import('./matches.js');
-            await updateConvocations(matchId, selected.map(p => p.id), match.convocazioni);
+            // 2. Set Convocations
+            const convocazioni = {};
+            selected.forEach(p => convocazioni[p.id] = RISPOSTE.PRESENTE);
+            await updateConvocations(matchId, selected.map(p => p.id), convocazioni);
+
+            // 3. Set Teams
             await updateTeams(matchId, squadraRossa, squadraBlu);
 
+            // 4. Set Results (Goals & Events)
+            const marcatori = [];
+
+            // Goals for Rossi
+            for (let g = 0; g < golRossi; g++) {
+                marcatori.push({ playerId: squadraRossa[Math.floor(Math.random() * squadraRossa.length)], gol: 1 });
+            }
+            // Goals for Blu
+            for (let g = 0; g < golBlu; g++) {
+                marcatori.push({ playerId: squadraBlu[Math.floor(Math.random() * squadraBlu.length)], gol: 1 });
+            }
+
+            const results = {
+                gol_rossi: golRossi,
+                gol_blu: golBlu,
+                mvp_rossi: squadraRossa[Math.floor(Math.random() * squadraRossa.length)],
+                mvp_blu: squadraBlu[Math.floor(Math.random() * squadraBlu.length)],
+                marcatori: marcatori,
+                cartellini: []
+            };
+
+            await setResults(matchId, results);
+
+            // 5. Update Stats for this match
+            console.log(`Match ${i + 1}/${count} generated: ${golRossi}-${golBlu}`);
+
         } catch (e) {
-            console.error('Error adding match', e);
+            console.error('Error generating test match', e);
         }
     }
 
-    // Refresh store
+    // Refresh store and trigger global stats refresh
+    console.log('Finalizing stats update...');
     const allMatches = await db.getAll('matches');
-    store.setState({ matches: allMatches });
+    const { getMatchWithDetails } = await import('./matches.js');
 
-    // Trigger stats update
-    const { updatePlayerStats } = await import('./stats.js');
-    const newMatches = await db.getAll('matches'); // Get fresh with IDs
-
-    // Update stats for all closed matches sequentially
-    for (const m of newMatches) {
-        if (m.stato === STATI.CHIUSA) {
-            const currentPlayers = await db.getAll('players'); // Need fresh players for each iteration
-            await updatePlayerStats(m, currentPlayers);
+    for (const m of allMatches) {
+        if (m.stato === 'chiusa') {
+            const richMatch = await getMatchWithDetails(m.id);
+            const currentPlayers = await db.getAll('players');
+            await updatePlayerStats(richMatch, currentPlayers);
         }
     }
 
-    // Final refresh
+    // Re-sync final state
+    const finalMatches = await db.getAll('matches');
     const finalPlayers = await db.getAll('players');
-    store.setState({ players: finalPlayers });
+    store.setState({ matches: finalMatches, players: finalPlayers });
 
-    console.log('Matches generated and stats updated');
+    console.log('Test data generation complete');
 }
