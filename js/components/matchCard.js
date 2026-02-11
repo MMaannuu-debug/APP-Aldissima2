@@ -490,6 +490,7 @@ function setupMatchModalHandlers(match, players, matches) {
 
 export function renderMatchForm(match) {
     const isEdit = !!match;
+    const isAdmin = store.isAdmin();
 
     // Default to next Tuesday
     const defaultDate = getNextTuesday().toISOString().split('T')[0];
