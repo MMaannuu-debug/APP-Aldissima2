@@ -6,6 +6,7 @@ import { store } from '../store.js';
 import db from '../db.js';
 import {
     updateConvocations,
+    closeMatch,
     updateTeams,
     setTeams,
     resetTeams,
@@ -1100,32 +1101,32 @@ function renderResultsForm(match, players) {
         const cardCheckboxes = document.querySelectorAll('.card-checkbox:checked');
         const ammonizioni = Array.from(cardCheckboxes).map(cb => cb.dataset.playerId);
 
-        try {
-            await setResults(match.id, {
-                gol_rossi: gol_rossi,
-                gol_blu: gol_blu,
-                mvp_rossi: mvp_rossi,
-                mvp_blu: mvp_blu,
-                marcatori,
-                ammonizioni
-            });
+        // 1. Save results
+        await setResults(match.id, {
+            gol_rossi: gol_rossi,
+            gol_blu: gol_blu,
+            mvp_rossi: mvp_rossi,
+            mvp_blu: mvp_blu,
+            marcatori,
+            ammonizioni
+        });
 
-            // Update player stats
-            const updatedMatch = await getMatchWithDetails(match.id);
-            await updatePlayerStats(updatedMatch, players);
+        // 2. Close match (generates commentary)
+        await closeMatch(match.id);
 
-            // Refresh data
-            await getAllMatches();
-            const updatedPlayers = await db.getAll('players');
-            store.setState({ players: updatedPlayers });
+        showToast('Partita chiusa e commento generato!', 'success');
 
-            showToast('Partita chiusa!', 'success');
-            renderMatchModal(match.id); // Refresh modal
-            refreshCurrentPage();
-        } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
-        }
-    });
+        // 3. Refresh data
+        await getAllMatches();
+        const updatedPlayers = await db.getAll('players');
+        store.setState({ players: updatedPlayers });
+
+        renderMatchModal(match.id); // Refresh modal
+        refreshCurrentPage();
+    } catch (error) {
+        showToast('Errore: ' + error.message, 'error');
+    }
+});
 }
 
 function renderScorerRow(scorer, players, index, match) {
