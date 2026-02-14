@@ -632,7 +632,7 @@ body {
 .player-avatar {
     width: 48px;
     height: 48px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-lg);
     background: var(--color-primary-100);
     display: flex;
     align-items: center;
@@ -1262,5 +1262,47 @@ body {
 @media (max-width: 480px) {
     .admin-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ================================
+   BIRTHDAY BANNER
+   ================================ */
+
+.birthday-banner {
+    background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 100%);
+    color: #d81b60;
+    padding: var(--spacing-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-4);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    border: 2px solid #ffdde1;
+    animation: pulse-border 2s infinite ease-in-out;
+}
+
+.birthday-banner .greeting {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    margin-bottom: var(--spacing-1);
+    display: block;
+}
+
+.birthday-banner .subtext {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+@keyframes pulse-border {
+
+    0%,
+    100% {
+        border-color: #ffdde1;
+        transform: scale(1);
+    }
+
+    50% {
+        border-color: #ff9a9e;
+        transform: scale(1.02);
     }
 }

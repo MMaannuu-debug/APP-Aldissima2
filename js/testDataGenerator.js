@@ -31,7 +31,7 @@ export async function generateTestPlayers(count = 20) {
             partite_vinte: 0,
             presenze: 0,
             gol_segnati: 0,
-            cartellini_ricevuti: 0,
+            ammonizioni_ricevute: 0,
             partite_rossi: 0,
             partite_blu: 0
         };
@@ -121,7 +121,7 @@ export async function generateTestMatches(count = 10) {
                 mvp_rossi: squadraRossa[Math.floor(Math.random() * squadraRossa.length)],
                 mvp_blu: squadraBlu[Math.floor(Math.random() * squadraBlu.length)],
                 marcatori: marcatori,
-                cartellini: []
+                ammonizioni: []
             };
 
             await setResults(matchId, results);

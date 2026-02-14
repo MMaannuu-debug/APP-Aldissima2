@@ -35,7 +35,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 - Creare, modificare, annullare, riaprire partite  
 - Convocare giocatori  
 - Creare/modificare squadre  
-- Inserire/modificare risultati, marcatori, cartellini, MVP  
+- Inserire/modificare risultati, marcatori, ammonizioni, MVP  
 - Chiudere partite  
 - Creare/modificare giocatori  
 - Esportare statistiche e classifiche  
@@ -96,7 +96,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 ## 6. Scheda Giocatore
 
 ### Dati visibili a tutti
-- ID, Nome, Cognome, Soprannome  
+- ID, Nome, Cognome, Soprannome, Data di nascita  
 - Foto (JPG, opzionale, max 1MB, upload solo da dispositivo)  
 - Ruolo principale / secondario  
   - Ruoli: Attaccante, Centrocampista, Difensore, Laterale, Portiere  
@@ -129,7 +129,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 ### Dati dopo partita (necessari per chiusura)
 - Gol squadra Rossa / Blu  
 - Marcatori e numero gol  
-- Cartellini gialli  
+- Ammonizioni  
 - MVP squadra Rossa / Blu  
 
 ---
@@ -186,6 +186,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 ## 11. Home / Dashboard Giocatore
 - Mostra ultima partita chiusa (3 giorni)  
 - Se partita aperta → mostra convocazione  
+- Se è il compleanno dell'utente → mostra messaggio di auguri "TANTI AUGURI [soprannome]"  
 - Squadre pubblicate → mostra formazioni + **pronostico risultato secco**  
 - Partita chiusa → mostra risultato finale  
 
@@ -198,7 +199,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 - Partite vinte  
 - Presenze  
 - Gol segnati  
-- Cartellini ricevuti  
+- Ammonizioni ricevute  
 - Partite giocate nei Rossi  
 - Partite giocate nei Blu  
 
@@ -213,7 +214,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 - Punti MVP  
 - Presenze  
 - Gol per giocatore  
-- Cartellini per giocatore  
+- Ammonizioni per giocatore  
 
 **Admin può esportare tutto in Excel**  
 
@@ -234,7 +235,7 @@ Sii pragmatico. Sii affidabile. Auto-correggiti.
 
 ---
 
-## 15. Cartellini
+## 15. Ammonizioni
 - Solo gialli  
 
 ---
@@ -254,7 +255,7 @@ flowchart TD
     H -->|Modifica / Forza| G
     H -->|Annulla tutto| F
     I --> J[Partita GIOCATA / CHIUSA]
-    J --> K[Inserimento dati: gol, marcatori, cartellini, MVP]
+    J --> K[Inserimento dati: gol, marcatori, ammonizioni, MVP]
     K --> L[Aggiornamento statistiche e classifiche]
 flowchart LR
     P[Giocatore convocato] -->|Presente| A1[Conteggiato]
@@ -328,7 +329,7 @@ Scheda partita
 | Pronostico risultato secco: 3-2       |
 +------------------------------------+
 | Dati partita chiusa:                  |
-| - Gol, marcatori, cartellini, MVP    |
+| - Gol, marcatori, ammonizioni, MVP    |
 | - Aggiornamento statistiche           |
 +------------------------------------+
 

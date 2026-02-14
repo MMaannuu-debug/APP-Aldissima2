@@ -29,9 +29,10 @@ CREATE TABLE IF NOT EXISTS public.players (
     partite_vinte INTEGER DEFAULT 0,
     presenze INTEGER DEFAULT 0,
     gol_segnati INTEGER DEFAULT 0,
-    cartellini_ricevuti INTEGER DEFAULT 0,
+    ammonizioni_ricevute INTEGER DEFAULT 0,
     partite_rossi INTEGER DEFAULT 0,
     partite_blu INTEGER DEFAULT 0,
+    data_nascita DATE,
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.matches (
     pronostico TEXT,
     numero_partita INTEGER, -- Serial number within the year
     marcatori JSONB DEFAULT '[]',
-    cartellini JSONB DEFAULT '[]',
+    ammonizioni JSONB DEFAULT '[]',
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -92,7 +93,7 @@ CREATE TABLE IF NOT EXISTS public.match_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id UUID NOT NULL REFERENCES public.matches(id) ON DELETE CASCADE,
     player_id UUID NOT NULL REFERENCES public.players(id) ON DELETE CASCADE,
-    tipo TEXT NOT NULL CHECK (tipo IN ('gol', 'cartellino_giallo')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('gol', 'ammonizione')),
     quantita INTEGER DEFAULT 1, -- For goals
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

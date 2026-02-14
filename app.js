@@ -222,10 +222,11 @@ function setupEventListeners() {
             cognome: $('#reg-cognome').value.trim(),
             soprannome: $('#reg-soprannome').value.trim(),
             telefono: $('#reg-telefono').value.trim(),
+            data_nascita: $('#reg-data-nascita').value,
             password: $('#reg-password').value
         };
 
-        if (!userData.nome || !userData.cognome || !userData.telefono || !userData.password) {
+        if (!userData.nome || !userData.cognome || !userData.telefono || !userData.password || !userData.data_nascita) {
             showToast('Compila tutti i campi obbligatori', 'error');
             return;
         }

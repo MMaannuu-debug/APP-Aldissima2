@@ -140,6 +140,10 @@ export async function renderPlayerModal(playerId) {
                         <span style="font-weight: 500;">${player.tipologia === 'titolare' ? 'Titolare' : 'Riserva'}</span>
                     </div>
                 ` : ''}
+                <div style="display: flex; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
+                    <span style="color: var(--color-text-secondary);">Data di nascita</span>
+                    <span style="font-weight: 500;">${player.data_nascita ? formatDate(player.data_nascita) : 'Non inserita'}</span>
+                </div>
             </div>
             
             ${isAdmin ? `
@@ -222,6 +226,10 @@ export function renderPlayerForm(player) {
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="pf-email" value="${player?.email || ''}">
+                </div>
+                <div class="form-group">
+                    <label>Data di nascita (GIORNO MESE ANNO)</label>
+                    <input type="date" id="pf-data-nascita" value="${player?.data_nascita || ''}" required>
                 </div>
                 <div class="form-group">
                     <label>Ruolo principale</label>
@@ -342,6 +350,7 @@ function setupPlayerFormHandlers(existingPlayer) {
             soprannome: document.getElementById('pf-soprannome').value.trim(),
             telefono: document.getElementById('pf-telefono').value.trim(),
             email: document.getElementById('pf-email').value.trim(),
+            data_nascita: document.getElementById('pf-data-nascita').value,
             ruolo_principale: document.getElementById('pf-ruolo1').value,
             ruolo_secondario: document.getElementById('pf-ruolo2').value
         };
@@ -380,7 +389,7 @@ function setupPlayerFormHandlers(existingPlayer) {
         }
 
         // Validate
-        if (!data.nome || !data.cognome || !data.telefono) {
+        if (!data.nome || !data.cognome || !data.telefono || !data.data_nascita) {
             showToast('Compila tutti i campi obbligatori', 'error');
             return;
         }
@@ -464,6 +473,21 @@ function renderRatingInput(label, id, value) {
             </div>
         </div>
     `;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '';
+    // Use manual split to avoid timezone issues with new Date(string)
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 export default { renderPlayers, renderPlayerModal, renderPlayerForm };

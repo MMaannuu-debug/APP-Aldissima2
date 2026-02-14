@@ -69,7 +69,7 @@ export async function getAllMatches() {
             squadraRossa: m.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
             squadraBlu: m.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),
             marcatori: m.match_events.filter(e => e.tipo === 'gol').map(e => ({ playerId: e.player_id, gol: e.quantita })),
-            cartellini: m.match_events.filter(e => e.tipo === 'cartellino_giallo').map(e => e.player_id)
+            ammonizioni: m.match_events.filter(e => e.tipo === 'ammonizione').map(e => e.player_id)
         };
     });
 
@@ -165,7 +165,7 @@ export async function getMatchWithDetails(id) {
         squadraRossa: match.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
         squadraBlu: match.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),
         marcatori: match.match_events.filter(e => e.tipo === 'gol').map(e => ({ playerId: e.player_id, gol: e.quantita })),
-        cartellini: match.match_events.filter(e => e.tipo === 'cartellino_giallo').map(e => e.player_id)
+        ammonizioni: match.match_events.filter(e => e.tipo === 'ammonizione').map(e => e.player_id)
     };
 }
 
@@ -206,7 +206,7 @@ export async function updateMatch(id, updates) {
     const {
         convocazioni, convocatiIds,
         squadraRossa, squadraBlu,
-        marcatori, cartellini,
+        marcatori, ammonizioni,
         ...coreUpdates
     } = updates;
 
@@ -346,7 +346,7 @@ export async function setResults(matchId, results) {
     const supabase = db.getClient();
     if (!supabase) return;
 
-    const { gol_rossi, gol_blu, marcatori, cartellini, mvp_rossi, mvp_blu } = results;
+    const { gol_rossi, gol_blu, marcatori, ammonizioni, mvp_rossi, mvp_blu } = results;
 
     // 1. Sync events (delete old, insert new)
     const { error: delError } = await supabase
@@ -363,11 +363,11 @@ export async function setResults(matchId, results) {
             tipo: 'gol',
             quantita: m.gol || 1
         })),
-        ...(cartellini || []).map(pid => ({
+        ...(ammonizioni || []).map(pid => ({
             match_id: matchId,
             player_id: pid,
-            tipo: 'cartellino_giallo',
-            quantita: 1
+            tipo: 'ammonizione',
+            tempo: null
         }))
     ];
 

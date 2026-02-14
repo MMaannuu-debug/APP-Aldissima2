@@ -49,7 +49,7 @@ export async function updatePlayerStats(match, players) {
             .reduce((sum, m) => sum + (m.gol || 1), 0);
 
         // Get yellow cards
-        const yellowCards = match.cartellini.filter(id => id === playerId).length;
+        const yellowCards = match.ammonizioni.filter(id => id === playerId).length;
 
         // Update stats
         const statsUpdate = {
@@ -57,7 +57,7 @@ export async function updatePlayerStats(match, players) {
             partite_vinte: (player.partite_vinte || 0) + (isWinner ? 1 : 0),
             presenze: (player.presenze || 0) + 1,
             gol_segnati: (player.gol_segnati || 0) + playerGoals,
-            cartellini_ricevuti: (player.cartellini_ricevuti || 0) + yellowCards,
+            ammonizioni_ricevute: (player.ammonizioni_ricevute || 0) + yellowCards,
             partite_rossi: (player.partite_rossi || 0) + (isRossi ? 1 : 0),
             partite_blu: (player.partite_blu || 0) + (isBlu ? 1 : 0)
         };
@@ -86,8 +86,8 @@ export function getLeaderboard(players, category = 'mvp', limit = 10) {
                 return (b.presenze || 0) - (a.presenze || 0);
             case 'gol':
                 return (b.gol_segnati || 0) - (a.gol_segnati || 0);
-            case 'cartellini':
-                return (b.cartellini_ricevuti || 0) - (a.cartellini_ricevuti || 0);
+            case 'ammonizioni':
+                return (b.ammonizioni_ricevute || 0) - (a.ammonizioni_ricevute || 0);
             case 'vittorie':
                 return (b.partite_vinte || 0) - (a.partite_vinte || 0);
             default:
@@ -107,7 +107,7 @@ function getStatValue(player, category) {
         case 'mvp': return player.punti_mvp || 0;
         case 'presenze': return player.presenze || 0;
         case 'gol': return player.gol_segnati || 0;
-        case 'cartellini': return player.cartellini_ricevuti || 0;
+        case 'ammonizioni': return player.ammonizioni_ricevute || 0;
         case 'vittorie': return player.partite_vinte || 0;
         default: return 0;
     }
@@ -213,7 +213,7 @@ export function exportPlayersToExcel(players) {
         'Partite Vinte': p.partite_vinte || 0,
         Presenze: p.presenze || 0,
         Gol: p.gol_segnati || 0,
-        Cartellini: p.cartellini_ricevuti || 0,
+        Ammonizioni: p.ammonizioni_ricevute || 0,
         'Partite Rossi': p.partite_rossi || 0,
         'Partite Blu': p.partite_blu || 0
     }));
@@ -245,7 +245,7 @@ export function exportLeaderboardToExcel(players) {
         Presenze: p.presenze || 0,
         Gol: p.gol_segnati || 0,
         Vittorie: p.partite_vinte || 0,
-        Cartellini: p.cartellini_ricevuti || 0,
+        Ammonizioni: p.ammonizioni_ricevute || 0,
         'Media Gol': p.presenze ? (p.gol_segnati / p.presenze).toFixed(2) : 0,
         'Win Rate %': p.presenze ? ((p.partite_vinte / p.presenze) * 100).toFixed(1) : 0
     }));

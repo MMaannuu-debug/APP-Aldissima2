@@ -149,7 +149,7 @@ function getDefaultPlayerData() {
         partite_vinte: 0,
         presenze: 0,
         gol_segnati: 0,
-        cartellini_ricevuti: 0,
+        ammonizioni_ricevute: 0,
         partite_rossi: 0,
         partite_blu: 0
     };

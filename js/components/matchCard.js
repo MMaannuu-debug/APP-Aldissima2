@@ -957,7 +957,7 @@ function renderResultsForm(match, players) {
             </div>
             
             <div class="form-group">
-                <label>Cartellini gialli (opzionale)</label>
+                <label>Ammonizioni (opzionale)</label>
                 <div id="cards-list" style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
                     ${allMatchPlayers.map(p => {
         let nameStyle = '';
@@ -967,7 +967,7 @@ function renderResultsForm(match, players) {
         return `
                         <label style="display: flex; align-items: center; gap: var(--spacing-1); cursor: pointer;">
                             <input type="checkbox" class="card-checkbox" data-player-id="${p.id}" 
-                                   ${(match.cartellini || []).includes(p.id) ? 'checked' : ''}>
+                                   ${(match.ammonizioni || []).includes(p.id) ? 'checked' : ''}>
                             <span style="font-size: var(--font-size-sm); ${nameStyle}">${getPlayerDisplayName(p)}</span>
                         </label>
                     `}).join('')}
@@ -1042,7 +1042,7 @@ function renderResultsForm(match, players) {
 
         // Get cards
         const cardCheckboxes = document.querySelectorAll('.card-checkbox:checked');
-        const cartellini = Array.from(cardCheckboxes).map(cb => cb.dataset.playerId);
+        const ammonizioni = Array.from(cardCheckboxes).map(cb => cb.dataset.playerId);
 
         try {
             await setResults(match.id, {
@@ -1051,7 +1051,7 @@ function renderResultsForm(match, players) {
                 mvp_rossi: mvp_rossi,
                 mvp_blu: mvp_blu,
                 marcatori,
-                cartellini
+                ammonizioni
             });
 
             // Update player stats

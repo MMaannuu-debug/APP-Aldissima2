@@ -84,7 +84,8 @@ export async function login(username, password) {
         cognome: user.cognome,
         soprannome: user.soprannome,
         ruolo: user.ruolo || 'operatore',
-        foto: user.foto
+        foto: user.foto,
+        data_nascita: user.data_nascita
     };
 
     setSession(sessionUser);
@@ -93,7 +94,7 @@ export async function login(username, password) {
 
 export async function register(userData) {
     // Validate required fields
-    if (!userData.nome || !userData.cognome || !userData.password || !userData.telefono) {
+    if (!userData.nome || !userData.cognome || !userData.password || !userData.telefono || !userData.data_nascita) {
         return { success: false, error: 'Compila tutti i campi obbligatori' };
     }
 
@@ -130,13 +131,14 @@ export async function register(userData) {
         possesso: 3,
         forma_fisica: 3,
         foto: '',
+        data_nascita: userData.data_nascita,
         bloccato: false,
         // Stats
         punti_mvp: 0,
         partite_vinte: 0,
         presenze: 0,
         gol_segnati: 0,
-        cartellini_ricevuti: 0,
+        ammonizioni_ricevute: 0,
         partite_rossi: 0,
         partite_blu: 0
     };
@@ -156,7 +158,8 @@ export async function register(userData) {
             cognome: savedPlayer.cognome,
             soprannome: savedPlayer.soprannome,
             ruolo: savedPlayer.ruolo,
-            foto: savedPlayer.foto
+            foto: savedPlayer.foto,
+            data_nascita: savedPlayer.data_nascita
         };
 
         setSession(sessionUser);
@@ -206,7 +209,8 @@ export async function restoreSession() {
             const updatedSession = {
                 ...session,
                 ruolo: player.ruolo || 'operatore',
-                foto: player.foto
+                foto: player.foto,
+                data_nascita: player.data_nascita
             };
             setSession(updatedSession);
             return updatedSession;

@@ -82,7 +82,7 @@ export async function renderStats(container, state) {
                 <button class="tab" data-category="presenze">📊 Presenze</button>
                 <button class="tab" data-category="gol">⚽ Gol</button>
                 <button class="tab" data-category="vittorie">🥇 Vittorie</button>
-                <button class="tab" data-category="cartellini">🟨 Cartellini</button>
+                <button class="tab" data-category="ammonizioni">🟨 Ammonizioni</button>
             </div>
             
             <div class="card" id="leaderboard-container">
@@ -160,7 +160,7 @@ function renderLeaderboard(players, category) {
         presenze: 'Presenze',
         gol: 'Gol',
         vittorie: 'Vittorie',
-        cartellini: 'Cartellini'
+        ammonizioni: 'Ammonizioni'
     };
 
     return `
