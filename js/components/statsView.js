@@ -142,13 +142,36 @@ export async function renderStats(container, state) {
 function renderLeaderboard(players, category, matches) {
     let leaderboardData;
 
-    if (category === 'presenze') {
+    const categoriesWithRates = ['presenze', 'mvp', 'gol', 'ammonizioni'];
+
+    if (categoriesWithRates.includes(category)) {
         leaderboardData = players.map(p => {
             const stats = getPlayerYearlyStats(p, matches);
+            let value, rate;
+
+            switch (category) {
+                case 'presenze':
+                    value = stats.presenze;
+                    rate = stats.percentuale;
+                    break;
+                case 'mvp':
+                    value = stats.mvpPoints;
+                    rate = stats.mvpRate;
+                    break;
+                case 'gol':
+                    value = stats.gol;
+                    rate = stats.mediaGol; // rate will be the numeric average here
+                    break;
+                case 'ammonizioni':
+                    value = stats.ammonizioni;
+                    rate = stats.badGuyRate;
+                    break;
+            }
+
             return {
                 player: p,
-                value: stats.presenze,
-                percentuale: stats.percentuale
+                value,
+                rate
             };
         })
             .sort((a, b) => b.value - a.value)
@@ -175,9 +198,11 @@ function renderLeaderboard(players, category, matches) {
     return `
         <ul class="leaderboard">
             ${leaderboardData.map((item, index) => {
-        const displayValue = category === 'presenze'
-            ? `${item.value} <span style="font-size: 0.8em; opacity: 0.7;">(${item.percentuale}%)</span>`
-            : item.value;
+        let displayValue = item.value;
+        if (categoriesWithRates.includes(category)) {
+            const isMediaGol = category === 'gol';
+            displayValue = `${item.value} <span style="font-size: 0.8em; opacity: 0.7;">(${item.rate}${isMediaGol ? '' : '%'})</span>`;
+        }
 
         return `
                 <li class="leaderboard-item">
