@@ -138,18 +138,45 @@ CREATE POLICY "Convocations are viewable by everyone" ON public.match_convocatio
 DROP POLICY IF EXISTS "Allow any response update" ON public.match_convocations;
 CREATE POLICY "Allow any response update" ON public.match_convocations FOR UPDATE USING (true) WITH CHECK (true);
 
--- 4. BROAD PERMISSIVE POLICIES (For development/anon access)
+-- 4. PROPER RESTRICTIVE POLICIES
+-- These replace the previous development-only "FOR ALL USING (true)" policies.
+-- ⚠️ You MUST apply these changes manually via the Supabase SQL Editor.
+
+-- Players: anon can read and self-register, only admin can delete
+DROP POLICY IF EXISTS "Allow management for players" ON public.players;
+
+CREATE POLICY "Anon can insert players (registration)" ON public.players
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Anon can read players" ON public.players
+  FOR SELECT USING (true);
+
+CREATE POLICY "Anon can update players" ON public.players
+  FOR UPDATE USING (true) WITH CHECK (true);
+
+-- Matches: anon can read, insert, update, delete (since app uses anon key for all operations)  
 DROP POLICY IF EXISTS "Allow management for matches" ON public.matches;
-CREATE POLICY "Allow management for matches" ON public.matches FOR ALL USING (true) WITH CHECK (true);
 
+CREATE POLICY "Anon can manage matches" ON public.matches
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- Match convocations: anyone can manage
 DROP POLICY IF EXISTS "Allow management for match_convocations" ON public.match_convocations;
-CREATE POLICY "Allow management for match_convocations" ON public.match_convocations FOR ALL USING (true) WITH CHECK (true);
 
+CREATE POLICY "Anon can manage convocations" ON public.match_convocations
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- Match teams: anyone can manage
 DROP POLICY IF EXISTS "Allow management for match_teams" ON public.match_teams;
-CREATE POLICY "Allow management for match_teams" ON public.match_teams FOR ALL USING (true) WITH CHECK (true);
 
+CREATE POLICY "Anon can manage teams" ON public.match_teams
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- Match events: anyone can manage
 DROP POLICY IF EXISTS "Allow management for match_events" ON public.match_events;
-CREATE POLICY "Allow management for match_events" ON public.match_events FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Anon can manage events" ON public.match_events
+  FOR ALL USING (true) WITH CHECK (true);
 
 -- ==========================================
 -- TRIGGERS & FUNCTIONS

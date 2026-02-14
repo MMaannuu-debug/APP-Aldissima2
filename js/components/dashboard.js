@@ -16,6 +16,7 @@ import {
     getMatchIdentifier
 } from '../matches.js';
 import { getPlayerDisplayName } from '../players.js';
+import { escapeHtml } from '../utils.js';
 
 
 export async function renderDashboard(container, state) {
@@ -183,7 +184,7 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                      <div style="font-size: var(--font-size-xl); color: var(--color-text-primary); font-weight: 800; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">
                         #${getMatchIdentifier(match, allMatches)}
                     </div>
-                    <span class="match-date" style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary); text-transform: uppercase;">${formatMatchDate(match.data)} • ${match.orario} • ${match.luogo}</span>
+                    <span class="match-date" style="font-size: var(--font-size-lg); font-weight: 700; color: var(--color-text-primary); text-transform: uppercase;">${formatMatchDate(match.data)} • ${escapeHtml(match.orario)} • ${escapeHtml(match.luogo)}</span>
                 </div>
                 <div style="font-size: var(--font-size-lg); font-weight: 600; color: var(--color-primary);">${(match.tipologia || '').toUpperCase()}</div>
             </div>
@@ -266,10 +267,10 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                         <div class="mini-player-card">
                             <div class="player-avatar" ${p.foto ? `data-photo="${p.foto}"` : ''} style="${nameStyle ? 'border: 2px solid ' + (match.squadraRossa?.includes(p.id) ? 'var(--color-team-red-dark)' : 'var(--color-team-blue-dark)') : ''}">
                                 ${p.foto ?
-                    `<img src="${p.foto}" alt="${p.nome}">` :
-                    (p.soprannome || p.nome).charAt(0).toUpperCase()}
+                    `<img src="${escapeHtml(p.foto)}" alt="${escapeHtml(p.nome)}">` :
+                    escapeHtml((p.soprannome || p.nome).charAt(0).toUpperCase())}
                             </div>
-                            <div class="player-name-small" style="${nameStyle}">${p.soprannome || p.nome}</div>
+                            <div class="player-name-small" style="${nameStyle}">${escapeHtml(p.soprannome || p.nome)}</div>
                         </div>
                     `}).join('')}
                 </div>

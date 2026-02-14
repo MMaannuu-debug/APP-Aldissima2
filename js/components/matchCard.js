@@ -27,6 +27,7 @@ import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { createBalancedTeams, calculateBalance, getTeamStats } from '../teams.js';
 import { updatePlayerStats } from '../stats.js';
 import { showModal, closeModal, showToast } from '../../app.js';
+import { escapeHtml } from '../utils.js';
 
 export async function renderMatches(container, state) {
     const { matches, players } = state;
@@ -63,7 +64,7 @@ export async function renderMatches(container, state) {
                     <div class="card-body">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="font-weight: 600;">📍 ${match.luogo}</div>
+                                <div style="font-weight: 600;">📍 ${escapeHtml(match.luogo)}</div>
                                 <div style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">
                                     ${match.orario} • ${match.tipologia}
                                 </div>
@@ -143,7 +144,7 @@ export async function renderMatchModal(matchId) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-3); margin-bottom: var(--spacing-4);">
                 <div>
                     <div style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">Luogo</div>
-                    <div style="font-weight: 600;">📍 ${match.luogo}</div>
+                    <div style="font-weight: 600;">📍 ${escapeHtml(match.luogo)}</div>
                 </div>
                 <div>
                     <div style="color: var(--color-text-secondary); font-size: var(--font-size-sm);">Orario</div>
@@ -596,11 +597,6 @@ export function renderMatchForm(match) {
             store.setState({ matches: updatedMatches });
 
             showToast(isEdit ? 'Partita aggiornata!' : 'Partita creata!', 'success');
-
-            // Force reload to update list and ensure all states are clean
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
 
             if (matchIdToRefresh || match?.id) {
                 renderMatchModal(matchIdToRefresh || match.id);

@@ -8,7 +8,9 @@ import { store } from './store.js';
 const AUTH_KEY = 'calcetto_auth';
 const COLLECTION = 'players';
 
-// Admin credentials (hardcoded as per requirements)
+// ⚠️ SECURITY WARNING: These credentials are visible in client-side JavaScript.
+// For production, implement server-side authentication (e.g., Supabase Auth).
+// Anyone inspecting the JS bundle can see these values.
 const ADMIN_CREDENTIALS = {
     username: 'admin',
     password: '4444'

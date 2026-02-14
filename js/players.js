@@ -4,6 +4,7 @@
 
 import db from './db.js';
 import { store } from './store.js';
+import { escapeHtml } from './utils.js';
 
 const COLLECTION = 'players';
 
@@ -159,13 +160,13 @@ function getDefaultPlayerData() {
 
 export function getPlayerDisplayName(player) {
     if (!player) return 'Sconosciuto';
-    if (player.soprannome) return player.soprannome;
-    return `${player.nome} ${player.cognome}`;
+    if (player.soprannome) return escapeHtml(player.soprannome);
+    return `${escapeHtml(player.nome)} ${escapeHtml(player.cognome)}`;
 }
 
 export function getPlayerInitials(player) {
     if (!player) return '?';
-    return `${player.nome[0] || ''}${player.cognome[0] || ''}`.toUpperCase();
+    return escapeHtml(`${player.nome[0] || ''}${player.cognome[0] || ''}`.toUpperCase());
 }
 
 export function calculatePlayerRating(player) {

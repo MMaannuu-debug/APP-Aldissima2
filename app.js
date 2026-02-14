@@ -349,6 +349,9 @@ document.addEventListener('mouseover', (e) => {
     const avatar = e.target.closest('.player-avatar[data-photo]');
     if (!avatar || !avatar.dataset.photo) return;
 
+    // Avoid duplicate overlays
+    if (document.querySelector('.photo-preview-overlay')) return;
+
     showPhotoPreview(avatar.dataset.photo);
 });
 
@@ -361,6 +364,9 @@ document.addEventListener('mouseout', (e) => {
 
 function showPhotoPreview(photoUrl) {
     if (!photoUrl) return;
+
+    // Prevent duplicate overlays
+    if (document.querySelector('.photo-preview-overlay')) return;
 
     const overlay = document.createElement('div');
     overlay.className = 'photo-preview-overlay';

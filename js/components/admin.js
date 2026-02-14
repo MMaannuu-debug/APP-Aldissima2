@@ -6,6 +6,7 @@ import { store } from '../store.js';
 import db from '../db.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { showToast } from '../../app.js';
+import { escapeHtml } from '../utils.js';
 
 export async function renderAdmin(container, state) {
     const { players } = state;
@@ -57,8 +58,8 @@ export async function renderAdmin(container, state) {
                                 <div class="player-info">
                                     <div class="player-name">${getPlayerDisplayName(player)}</div>
                                     <div class="player-role" style="display: flex; gap: var(--spacing-2); align-items: center; margin-top: 4px;">
-                                        <span class="role-badge ${player.ruolo || 'operatore'}">${player.ruolo || 'operatore'}</span>
-                                        <span style="font-family: monospace; background: var(--color-primary-50); color: var(--color-primary-dark); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700;">PWD: ${player.password_numeric}</span>
+                                        <span class="role-badge ${escapeHtml(player.ruolo || 'operatore')}">${escapeHtml(player.ruolo || 'operatore')}</span>
+                                        <span style="font-family: monospace; background: var(--color-primary-50); color: var(--color-primary-dark); padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700;">PWD: ••••</span>
                                         ${player.bloccato ? '<span style="color: var(--color-error); font-size: var(--font-size-xs);">🔒 Bloccato</span>' : ''}
                                     </div>
                                 </div>
