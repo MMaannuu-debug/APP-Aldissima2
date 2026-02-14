@@ -128,6 +128,11 @@ export function getPlayerYearlyStats(player, matches) {
         return sum + playerAmmonizioni;
     }, 0);
 
+    const calculateRate = (value, count) => {
+        if (!count) return 0;
+        return Math.round((value / count) * 100);
+    };
+
     const calculateAvg = (value, count) => {
         if (!count) return 0;
         return Math.round((value / count) * 100) / 100;
