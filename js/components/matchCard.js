@@ -642,25 +642,63 @@ function renderConvocationModal(match, players) {
             <button class="modal-close" data-action="close-modal">✕</button>
         </div>
         <div class="modal-body">
+            <!-- SELECTION TOOLBAR -->
+            <div style="margin-bottom: var(--spacing-4); padding: var(--spacing-3); background: var(--color-bg); border-radius: var(--radius-lg); border: 1px solid var(--color-border-light);">
+                <div style="font-size: var(--font-size-xs); font-weight: 700; color: var(--color-text-secondary); margin-bottom: var(--spacing-2); text-transform: uppercase; letter-spacing: 0.5px;">Selezione Rapida</div>
+                <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-3);">
+                    <button class="btn btn-secondary btn-sm" id="select-all-btn" style="flex: 1;">TUTTI</button>
+                    <button class="btn btn-secondary btn-sm" id="select-titolari-btn" style="flex: 1;">TITOLARI</button>
+                    <button class="btn btn-secondary btn-sm" id="select-riserve-btn" style="flex: 1;">RISERVE</button>
+                </div>
+                <button class="btn btn-primary btn-sm" id="bulk-convoke-btn" style="width: 100%; border-color: var(--color-primary-dark);">
+                    ✅ CONVOCA SELEZIONATI
+                </button>
+            </div>
+
             <div style="margin-bottom: var(--spacing-4);">
-                <h4 style="margin-bottom: var(--spacing-2);">Titolari</h4>
+                <h4 style="margin-bottom: var(--spacing-2); color: var(--color-primary-dark); font-size: var(--font-size-sm); text-transform: uppercase;">Titolari (${titolari.length})</h4>
                 ${titolari.map(p => renderConvocationPlayer(p, convocatiIds.includes(p.id), match.convocazioni?.[p.id])).join('')}
             </div>
             <div>
-                <h4 style="margin-bottom: var(--spacing-2);">Riserve</h4>
+                <h4 style="margin-bottom: var(--spacing-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); text-transform: uppercase;">Riserve (${riserve.length})</h4>
                 ${riserve.map(p => renderConvocationPlayer(p, convocatiIds.includes(p.id), match.convocazioni?.[p.id])).join('')}
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" data-action="close-modal">Chiudi</button>
-            <button class="btn btn-primary" id="save-convocations-btn">Salva convocazioni</button>
+            <button class="btn btn-secondary" data-action="close-modal">Annulla</button>
+            <button class="btn btn-primary" id="save-convocations-btn">Salva modifiche</button>
         </div>
     `;
 
     showModal(html);
 
-    // Save convocations
-    document.getElementById('save-convocations-btn').addEventListener('click', async () => {
+    // Bulk selection logic
+    const toggleCheckboxes = (filterFn) => {
+        const items = document.querySelectorAll('.player-item[data-player-type]');
+        items.forEach(item => {
+            const type = item.dataset.playerType;
+            if (filterFn(type)) {
+                const checkbox = item.querySelector('.convocation-checkbox');
+                const select = item.querySelector('.convocation-select');
+                checkbox.checked = true;
+                select.disabled = false;
+            } else {
+                // Should we uncheck the others? The user said "selection", usually it means "select these".
+                // Let's uncheck others for clarity if it's a specific group selection.
+                const checkbox = item.querySelector('.convocation-checkbox');
+                const select = item.querySelector('.convocation-select');
+                checkbox.checked = false;
+                select.disabled = true;
+            }
+        });
+    };
+
+    document.getElementById('select-all-btn').addEventListener('click', () => toggleCheckboxes(() => true));
+    document.getElementById('select-titolari-btn').addEventListener('click', () => toggleCheckboxes(t => t === 'titolare'));
+    document.getElementById('select-riserve-btn').addEventListener('click', () => toggleCheckboxes(t => t !== 'titolare'));
+
+    // Bulk Convocation Script
+    const saveCurrentState = async (forceStatus = null) => {
         const modalBody = document.querySelector('.modal-body');
         const items = modalBody.querySelectorAll('.player-item');
         const newConvocatiIds = [];
@@ -673,7 +711,7 @@ function renderConvocationModal(match, players) {
 
             if (checkbox.checked) {
                 newConvocatiIds.push(playerId);
-                convocazioni[playerId] = select.value;
+                convocazioni[playerId] = forceStatus || select.value;
             } else {
                 delete convocazioni[playerId];
             }
@@ -682,13 +720,16 @@ function renderConvocationModal(match, players) {
         try {
             await updateConvocations(match.id, newConvocatiIds, convocazioni);
             await getAllMatches();
-            showToast('Convocazioni salvate!', 'success');
-            renderMatchModal(match.id); // Refresh modal
+            showToast('Convocazioni salvate correttamente', 'success');
+            renderMatchModal(match.id);
             refreshCurrentPage();
         } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
+            showToast('Errore nel salvataggio: ' + error.message, 'error');
         }
-    });
+    };
+
+    document.getElementById('bulk-convoke-btn').addEventListener('click', () => saveCurrentState(RISPOSTE.PRESENTE));
+    document.getElementById('save-convocations-btn').addEventListener('click', () => saveCurrentState());
 }
 
 
@@ -696,7 +737,7 @@ function renderConvocationPlayer(player, isConvoked, currentStatus) {
     const status = currentStatus || RISPOSTE.IN_ATTESA;
 
     return `
-        <div class="player-item" style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-2) 0;">
+        <div class="player-item" data-player-type="${player.tipologia}" style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-2) 0; border-bottom: 1px solid var(--color-border-light);">
             <label style="display: flex; align-items: center; cursor: pointer; flex: 1;">
                 <input type="checkbox" class="convocation-checkbox" data-player-id="${player.id}" ${isConvoked ? 'checked' : ''} style="margin-right: var(--spacing-3);" onchange="this.closest('.player-item').querySelector('select').disabled = !this.checked">
                 <div class="player-avatar" style="width: 36px; height: 36px; font-size: var(--font-size-sm); margin-right: var(--spacing-2);">
