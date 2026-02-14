@@ -184,7 +184,8 @@ export function getPlayerYearlyStats(player, matches) {
         mvpPoints,
         mvpRate: calculateAvg(mvpPoints, presenze),
         ammonizioni,
-        badGuyRate: calculateAvg(ammonizioni, presenze)
+        badGuyRate: calculateAvg(ammonizioni, presenze),
+        winRate: calculateRate(winResults, presenze)
     };
 }
 

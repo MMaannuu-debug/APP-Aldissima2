@@ -127,8 +127,8 @@ export async function renderPlayerModal(playerId) {
                     <div class="stat-label">MVP</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${player.partite_vinte || 0}</div>
-                    <div class="stat-label">Vittorie (Tot)</div>
+                    <div class="stat-value">${yearlyStats.vittorie || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.winRate}%)</span></div>
+                    <div class="stat-label">Vittorie</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${yearlyStats.ammonizioni || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.badGuyRate})</span></div>
