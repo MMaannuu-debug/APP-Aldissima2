@@ -78,15 +78,17 @@ export async function renderStats(container, state) {
             
             <!-- Leaderboard Tabs -->
             <div class="tabs" id="leaderboard-tabs">
-                <button class="tab active" data-category="mvp">🏆 MVP</button>
-                <button class="tab" data-category="presenze">📊 Partite Rate%</button>
+                <button class="tab active" data-category="ald_index">🔥 ALDINDEX</button>
+                <button class="tab" data-category="partite_rate">📊 Partite Rate%</button>
                 <button class="tab" data-category="gol">⚽ Gol</button>
+                <button class="tab" data-category="presenze">👥 Presenze</button>
                 <button class="tab" data-category="vittorie">🥇 Vittorie</button>
+                <button class="tab" data-category="mvp">🏆 MVP</button>
                 <button class="tab" data-category="ammonizioni">🟨 Ammonizioni</button>
             </div>
             
             <div class="card" id="leaderboard-container">
-                ${renderLeaderboard(players, 'mvp', matches)}
+                ${renderLeaderboard(players, 'ald_index', matches)}
             </div>
             
             ${isAdmin ? `
@@ -142,7 +144,7 @@ export async function renderStats(container, state) {
 function renderLeaderboard(players, category, matches) {
     let leaderboardData;
 
-    const categoriesWithRates = ['presenze', 'mvp', 'gol', 'ammonizioni'];
+    const categoriesWithRates = ['ald_index', 'partite_rate', 'mvp', 'gol', 'ammonizioni'];
 
     if (categoriesWithRates.includes(category)) {
         leaderboardData = players.map(p => {
@@ -150,7 +152,11 @@ function renderLeaderboard(players, category, matches) {
             let value, rate;
 
             switch (category) {
-                case 'presenze':
+                case 'ald_index':
+                    value = stats.aldIndex;
+                    rate = null; // No secondary rate for ALDINDEX for now
+                    break;
+                case 'partite_rate':
                     value = stats.presenze;
                     rate = stats.percentuale;
                     break;
@@ -201,7 +207,8 @@ function renderLeaderboard(players, category, matches) {
         let displayValue = item.value;
         if (categoriesWithRates.includes(category)) {
             const isMediaGol = category === 'gol';
-            displayValue = `${item.value} <span style="font-size: 0.8em; opacity: 0.7;">(${item.rate}${isMediaGol ? '' : '%'})</span>`;
+            const hasRate = item.rate !== null && item.rate !== undefined;
+            displayValue = `${item.value} ${hasRate ? `<span style="font-size: 0.8em; opacity: 0.7;">(${item.rate}${isMediaGol ? '' : '%'})</span>` : ''}`;
         }
 
         return `

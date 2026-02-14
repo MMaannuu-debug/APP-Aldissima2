@@ -147,7 +147,9 @@ function getDefaultPlayerData() {
         // Stats
         punti_mvp: 0,
         partite_vinte: 0,
+        partite_pareggiate: 0,
         presenze: 0,
+        ald_index: 0,
         gol_segnati: 0,
         ammonizioni_ricevute: 0,
         partite_rossi: 0,

@@ -109,7 +109,11 @@ export async function renderPlayerModal(playerId) {
                 ${player.soprannome ? `<p style="color: var(--color-primary);">"${player.soprannome}"</p>` : ''}
             </div>
             
-            <div class="stats-grid" style="margin-bottom: var(--spacing-4); grid-template-columns: repeat(3, 1fr);">
+            <div class="stats-grid" style="margin-bottom: var(--spacing-4); grid-template-columns: repeat(2, 1fr);">
+                <div class="stat-card" style="grid-column: span 2; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white;">
+                    <div class="stat-value" style="color: white; font-size: 2rem;">${yearlyStats.aldIndex || 0}</div>
+                    <div class="stat-label" style="color: rgba(255,255,255,0.8); font-weight: 600;">ALDINDEX ${currentYear}</div>
+                </div>
                 <div class="stat-card">
                     <div class="stat-value">${yearlyStats.presenze || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.percentuale}%)</span></div>
                     <div class="stat-label">Partite Rate%</div>

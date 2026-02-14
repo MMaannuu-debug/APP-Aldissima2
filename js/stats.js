@@ -34,6 +34,9 @@ export async function updatePlayerStats(match, players) {
         if (isWinner) points += 3;
         if (isDraw) points += 1;
 
+        // ALDINDEX: Result Punti (3 win, 1 draw) + 1 (presence)
+        const aldPoints = (isWinner ? 3 : (isDraw ? 1 : 0)) + 1;
+
         // MVP points
         const isMvpRossi = match.mvp_rossi === playerId;
         const isMvpBlu = match.mvp_blu === playerId;
@@ -55,7 +58,9 @@ export async function updatePlayerStats(match, players) {
         const statsUpdate = {
             punti_mvp: (player.punti_mvp || 0) + (isMvpRossi || isMvpBlu ? (isWinner ? 3 : 1) : 0),
             partite_vinte: (player.partite_vinte || 0) + (isWinner ? 1 : 0),
+            partite_pareggiate: (player.partite_pareggiate || 0) + (isDraw ? 1 : 0),
             presenze: (player.presenze || 0) + 1,
+            ald_index: (player.ald_index || 0) + aldPoints,
             gol_segnati: (player.gol_segnati || 0) + playerGoals,
             ammonizioni_ricevute: (player.ammonizioni_ricevute || 0) + yellowCards,
             partite_rossi: (player.partite_rossi || 0) + (isRossi ? 1 : 0),
@@ -82,6 +87,7 @@ export function getPlayerYearlyStats(player, matches) {
 
     if (closedYearMatches.length === 0) {
         return {
+            aldIndex: 0,
             presenze: 0,
             totali: 0,
             percentuale: 0,
@@ -128,6 +134,16 @@ export function getPlayerYearlyStats(player, matches) {
         return sum + playerAmmonizioni;
     }, 0);
 
+    // Calculate ALDINDEX in these matches
+    const aldIndex = playerMatches.reduce((sum, m) => {
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const winner = m.gol_rossi > m.gol_blu ? 'rossi' : (m.gol_blu > m.gol_rossi ? 'blu' : 'pareggio');
+        const isWinner = (winner === 'rossi' && isRossi) || (winner === 'blu' && !isRossi);
+        const isDraw = winner === 'pareggio';
+        const points = (isWinner ? 3 : (isDraw ? 1 : 0)) + 1;
+        return sum + points;
+    }, 0);
+
     const calculateRate = (value, count) => {
         if (!count) return 0;
         return Math.round((value / count) * 100);
@@ -139,6 +155,7 @@ export function getPlayerYearlyStats(player, matches) {
     };
 
     return {
+        aldIndex,
         presenze,
         totali: closedYearMatches.length,
         percentuale: calculateRate(presenze, closedYearMatches.length),
@@ -158,6 +175,8 @@ export function getPlayerYearlyStats(player, matches) {
 export function getLeaderboard(players, category = 'mvp', limit = 10) {
     const sorted = [...players].sort((a, b) => {
         switch (category) {
+            case 'ald_index':
+                return (b.ald_index || 0) - (a.ald_index || 0);
             case 'mvp':
                 return (b.punti_mvp || 0) - (a.punti_mvp || 0);
             case 'presenze':
@@ -182,6 +201,7 @@ export function getLeaderboard(players, category = 'mvp', limit = 10) {
 
 function getStatValue(player, category) {
     switch (category) {
+        case 'ald_index': return player.ald_index || 0;
         case 'mvp': return player.punti_mvp || 0;
         case 'presenze': return player.presenze || 0;
         case 'gol': return player.gol_segnati || 0;
