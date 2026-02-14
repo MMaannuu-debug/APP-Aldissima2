@@ -366,8 +366,7 @@ export async function setResults(matchId, results) {
         ...(ammonizioni || []).map(pid => ({
             match_id: matchId,
             player_id: pid,
-            tipo: 'ammonizione',
-            tempo: null
+            tipo: 'ammonizione'
         }))
     ];
 
