@@ -5,6 +5,7 @@
 import db from './db.js';
 import { store } from './store.js';
 import { generaCommentoPartita } from './utils/aiCommentary.js';
+import stats from './stats.js';
 
 const COLLECTION = 'matches';
 
@@ -430,7 +431,7 @@ export async function closeMatch(matchId) {
     console.log('✅ Commento salvato con successo!');
 
     // 3. Update player stats
-    await updatePlayerStats(match);
+    await stats.updatePlayerStats(match);
 
     return true;
 }

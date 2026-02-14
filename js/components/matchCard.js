@@ -1101,32 +1101,33 @@ function renderResultsForm(match, players) {
         const cardCheckboxes = document.querySelectorAll('.card-checkbox:checked');
         const ammonizioni = Array.from(cardCheckboxes).map(cb => cb.dataset.playerId);
 
-        // 1. Save results
-        await setResults(match.id, {
-            gol_rossi: gol_rossi,
-            gol_blu: gol_blu,
-            mvp_rossi: mvp_rossi,
-            mvp_blu: mvp_blu,
-            marcatori,
-            ammonizioni
-        });
+        try {
+            // 1. Save results
+            await setResults(match.id, {
+                gol_rossi: gol_rossi,
+                gol_blu: gol_blu,
+                mvp_rossi: mvp_rossi,
+                mvp_blu: mvp_blu,
+                marcatori,
+                ammonizioni
+            });
 
-        // 2. Close match (generates commentary)
-        await closeMatch(match.id);
+            // 2. Close match (generates commentary)
+            await closeMatch(match.id);
 
-        showToast('Partita chiusa e commento generato!', 'success');
+            showToast('Partita chiusa e commento generato!', 'success');
 
-        // 3. Refresh data
-        await getAllMatches();
-        const updatedPlayers = await db.getAll('players');
-        store.setState({ players: updatedPlayers });
+            // 3. Refresh data
+            await getAllMatches();
+            const updatedPlayers = await db.getAll('players');
+            store.setState({ players: updatedPlayers });
 
-        renderMatchModal(match.id); // Refresh modal
-        refreshCurrentPage();
-    } catch (error) {
-        showToast('Errore: ' + error.message, 'error');
-    }
-});
+            renderMatchModal(match.id); // Refresh modal
+            refreshCurrentPage();
+        } catch (error) {
+            showToast('Errore: ' + error.message, 'error');
+        }
+    });
 }
 
 function renderScorerRow(scorer, players, index, match) {
