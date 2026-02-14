@@ -199,31 +199,6 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                         <span class="label">Giocatori</span>
                     </div>
                 </div>
-
-                <!-- Present Players List -->
-                ${presentPlayersList.length > 0 && match.stato !== STATI.PUBBLICATA && match.stato !== STATI.CHIUSA ? `
-                    <div class="present-players-section">
-                        <h4 class="section-title">Presenti (${presentPlayersList.length})</h4>
-                        <div class="present-players-grid">
-                            ${presentPlayersList.map(p => {
-        let nameStyle = '';
-        if (match.squadraRossa?.includes(p.id)) nameStyle = 'color: var(--color-team-red-dark); font-weight: 700;';
-        if (match.squadraBlu?.includes(p.id)) nameStyle = 'color: var(--color-team-blue-dark); font-weight: 700;';
-
-        return `
-                                <div class="mini-player-card">
-                                    <div class="player-avatar" ${p.foto ? `data-photo="${p.foto}"` : ''} style="${nameStyle ? 'border: 2px solid ' + (match.squadraRossa?.includes(p.id) ? 'var(--color-team-red-dark)' : 'var(--color-team-blue-dark)') : ''}">
-                                        ${p.foto ?
-                `<img src="${p.foto}" alt="${p.nome}">` :
-                (p.soprannome || p.nome).charAt(0).toUpperCase()}
-                                    </div>
-                                    <div class="player-name-small" style="${nameStyle}">${p.soprannome || p.nome}</div>
-                                </div>
-                            `}).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
     `;
 
     // Convocation buttons (show for all players if match is open)
@@ -276,6 +251,32 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
         `;
     }
 
+    // Present Players List (MOVED HERE)
+    if (presentPlayersList.length > 0 && match.stato !== STATI.PUBBLICATA && match.stato !== STATI.CHIUSA) {
+        html += `
+            <div class="present-players-section" style="margin-top: var(--spacing-6);">
+                <h4 class="section-title">Presenti (${presentPlayersList.length})</h4>
+                <div class="present-players-grid">
+                    ${presentPlayersList.map(p => {
+            let nameStyle = '';
+            if (match.squadraRossa?.includes(p.id)) nameStyle = 'color: var(--color-team-red-dark); font-weight: 700;';
+            if (match.squadraBlu?.includes(p.id)) nameStyle = 'color: var(--color-team-blue-dark); font-weight: 700;';
+
+            return `
+                        <div class="mini-player-card">
+                            <div class="player-avatar" ${p.foto ? `data-photo="${p.foto}"` : ''} style="${nameStyle ? 'border: 2px solid ' + (match.squadraRossa?.includes(p.id) ? 'var(--color-team-red-dark)' : 'var(--color-team-blue-dark)') : ''}">
+                                ${p.foto ?
+                    `<img src="${p.foto}" alt="${p.nome}">` :
+                    (p.soprannome || p.nome).charAt(0).toUpperCase()}
+                            </div>
+                            <div class="player-name-small" style="${nameStyle}">${p.soprannome || p.nome}</div>
+                        </div>
+                    `}).join('')}
+                </div>
+            </div>
+        `;
+    }
+
     // Teams display (if published)
     if (match.stato === STATI.PUBBLICATA || match.stato === STATI.SQUADRE_GENERATE) {
         const rossiPlayers = match.squadraRossa.map(id => players.find(p => p.id === id)).filter(Boolean);
@@ -317,13 +318,13 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
 
     html += `
             </div>
-            <div class="card-footer" style="text-align: center;">
-                <button class="btn btn-secondary btn-sm" data-action="view-match" data-id="${match.id}">
-                    Vedi dettagli
-                </button>
-            </div>
+        <div class="card-footer" style="text-align: center;">
+            <button class="btn btn-secondary btn-sm" data-action="view-match" data-id="${match.id}">
+                Vedi dettagli
+            </button>
         </div>
-    `;
+        </div>
+        `;
 
     return html;
 }
@@ -351,7 +352,7 @@ function renderBirthdayGreeting(user) {
             <span class="greeting">🎂 TANTI AUGURI ${displayName.toUpperCase()}! 🎈</span>
             <span class="subtext">Oggi è il tuo giorno speciale, tutta l'Aldissima ti festeggia!</span>
         </div>
-    `;
+        `;
 }
 
 export default { renderDashboard };
