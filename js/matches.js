@@ -406,13 +406,15 @@ export async function closeMatch(matchId) {
     try {
         const players = store.getState().players;
         commento = generaCommentoPartita(match, players);
+        console.log('✅ Commento generato:', commento);
     } catch (e) {
-        console.error("Errore generazione commento:", e);
+        console.error("❌ Errore generazione commento:", e);
         commento = "Partita conclusa.";
     }
 
     // 2. Update match status and commentary
     const supabase = db.getClient();
+    console.log('📝 Tentativo di salvare commento nel DB...');
     const { error } = await supabase
         .from('matches')
         .update({
@@ -421,7 +423,11 @@ export async function closeMatch(matchId) {
         })
         .eq('id', matchId);
 
-    if (error) throw error;
+    if (error) {
+        console.error('❌ Errore salvataggio commento:', error);
+        throw error;
+    }
+    console.log('✅ Commento salvato con successo!');
 
     // 3. Update player stats
     await updatePlayerStats(match);

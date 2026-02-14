@@ -38,6 +38,11 @@ export async function renderDashboard(container, state) {
 
     // Recent closed match (Below active)
     if (recentClosed) {
+        console.log('📊 Ultima partita chiusa:', recentClosed);
+        console.log('💬 Commento presente?', recentClosed.commento ? 'SÌ' : 'NO');
+        if (recentClosed.commento) {
+            console.log('💬 Testo commento:', recentClosed.commento);
+        }
         html += renderClosedMatch(recentClosed, players, matches);
     }
 
