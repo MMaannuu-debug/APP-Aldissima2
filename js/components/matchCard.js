@@ -901,9 +901,14 @@ function renderTeamBuilder(match, players, matches) {
     function renderUnassignedPlayer(player) {
         return `
             <div style="display: flex; align-items: center; gap: var(--spacing-2); background: var(--color-surface); border: 1px solid var(--color-border); padding: var(--spacing-2); border-radius: var(--radius-md);">
+                <div class="player-avatar" style="width: 28px; height: 28px; font-size: var(--font-size-xs);">
+                    ${player.foto ? `<img src="${player.foto}">` : getPlayerInitials(player)}
+                </div>
                 <span style="font-size: var(--font-size-sm);">${getPlayerDisplayName(player)}</span>
-                <button class="btn btn-sm" style="padding: 2px 8px; background: var(--color-team-red); color: var(--color-team-red-dark);" data-assign="rossi" data-player-id="${player.id}">R</button>
-                <button class="btn btn-sm" style="padding: 2px 8px; background: var(--color-team-blue); color: var(--color-team-blue-dark);" data-assign="blu" data-player-id="${player.id}">B</button>
+                <div style="display: flex; gap: 4px; margin-left: var(--spacing-1);">
+                    <button class="btn btn-sm" style="padding: 2px 6px; background: var(--color-team-red); color: var(--color-team-red-dark); font-weight: 700;" data-assign="rossi" data-player-id="${player.id}">R</button>
+                    <button class="btn btn-sm" style="padding: 2px 6px; background: var(--color-team-blue); color: var(--color-team-blue-dark); font-weight: 700;" data-assign="blu" data-player-id="${player.id}">B</button>
+                </div>
             </div>
         `;
     }
