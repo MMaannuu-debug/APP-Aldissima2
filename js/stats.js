@@ -182,9 +182,9 @@ export function getPlayerYearlyStats(player, matches) {
         gol,
         mediaGol: calculateAvg(gol, presenze),
         mvpPoints,
-        mvpRate: calculateRate(mvpPoints, presenze),
+        mvpRate: calculateAvg(mvpPoints, presenze),
         ammonizioni,
-        badGuyRate: calculateRate(ammonizioni, presenze)
+        badGuyRate: calculateAvg(ammonizioni, presenze)
     };
 }
 
@@ -331,13 +331,13 @@ export function exportPlayersToExcel(players, matches) {
             Ruolo: p.ruolo_principale || '',
             Tipologia: p.tipologia || '',
             [`Presenze (${currentYear})`]: yearly ? yearly.presenze : p.presenze || 0,
-            'Partite Rate%': yearly ? `${yearly.percentuale}%` : '-',
+            'Partite giocate': yearly ? `${yearly.percentuale}%` : '-',
             [`Gol (${currentYear})`]: yearly ? yearly.gol : p.gol_segnati || 0,
-            'Media Gol': yearly ? yearly.mediaGol : (p.presenze ? (p.gol_segnati / p.presenze).toFixed(2) : 0),
+            'GOL': yearly ? yearly.mediaGol : (p.presenze ? (p.gol_segnati / p.presenze).toFixed(2) : 0),
             [`Punti MVP (${currentYear})`]: yearly ? yearly.mvpPoints : p.punti_mvp || 0,
-            'MVP Rate%': yearly ? `${yearly.mvpRate}%` : '-',
+            'MVP': yearly ? `${yearly.mvpRate}%` : '-',
             [`Ammonizioni (${currentYear})`]: yearly ? yearly.ammonizioni : p.ammonizioni_ricevute || 0,
-            'Bad Guy Rate%': yearly ? `${yearly.badGuyRate}%` : '-',
+            'AMMONIZIONI': yearly ? `${yearly.badGuyRate}%` : '-',
             'Partite Vinte (Tot)': p.partite_vinte || 0,
             'Presenze (Tot)': p.presenze || 0
         };
@@ -369,13 +369,13 @@ export function exportLeaderboardToExcel(players, matches) {
         return {
             Giocatore: `${p.nome} ${p.cognome}`,
             [`Presenze (${currentYear})`]: presenze,
-            'Partite Rate%': yearly ? `${yearly.percentuale}%` : '-',
+            'Partite giocate': yearly ? `${yearly.percentuale}%` : '-',
             [`Gol (${currentYear})`]: yearly ? yearly.gol : p.gol_segnati || 0,
-            'Media Gol': yearly ? yearly.mediaGol : (presenze ? (p.gol_segnati / presenze).toFixed(2) : 0),
+            'GOL': yearly ? yearly.mediaGol : (presenze ? (p.gol_segnati / presenze).toFixed(2) : 0),
             [`Punti MVP (${currentYear})`]: yearly ? yearly.mvpPoints : p.punti_mvp || 0,
-            'MVP Rate%': yearly ? `${yearly.mvpRate}%` : '-',
+            'MVP': yearly ? `${yearly.mvpRate}%` : '-',
             [`Ammonizioni (${currentYear})`]: yearly ? yearly.ammonizioni : p.ammonizioni_ricevute || 0,
-            'Bad Guy Rate%': yearly ? `${yearly.badGuyRate}%` : '-',
+            'AMMONIZIONI': yearly ? `${yearly.badGuyRate}%` : '-',
             'Vittorie (Tot)': p.partite_vinte || 0
         };
     });

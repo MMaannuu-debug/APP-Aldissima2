@@ -79,7 +79,7 @@ export async function renderStats(container, state) {
             <!-- Leaderboard Tabs -->
             <div class="tabs" id="leaderboard-tabs">
                 <button class="tab active" data-category="ald_index">🔥 ALDINDEX</button>
-                <button class="tab" data-category="partite_rate">📊 Partite Rate%</button>
+                <button class="tab" data-category="partite_rate">📊 Partite giocate</button>
                 <button class="tab" data-category="gol">⚽ Gol</button>
                 <button class="tab" data-category="presenze">👥 Presenze</button>
                 <button class="tab" data-category="vittorie">🥇 Vittorie</button>

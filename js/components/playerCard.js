@@ -116,23 +116,23 @@ export async function renderPlayerModal(playerId) {
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${yearlyStats.presenze || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.percentuale}%)</span></div>
-                    <div class="stat-label">Partite Rate%</div>
+                    <div class="stat-label">Partite giocate</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${yearlyStats.gol || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.mediaGol})</span></div>
-                    <div class="stat-label">Media Gol</div>
+                    <div class="stat-label">GOL</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${yearlyStats.mvpPoints || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.mvpRate}%)</span></div>
-                    <div class="stat-label">MVP Rate%</div>
+                    <div class="stat-value">${yearlyStats.mvpPoints || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.mvpRate})</span></div>
+                    <div class="stat-label">MVP</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${player.partite_vinte || 0}</div>
                     <div class="stat-label">Vittorie (Tot)</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value">${yearlyStats.ammonizioni || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.badGuyRate}%)</span></div>
-                    <div class="stat-label">Bad Guy Rate%</div>
+                    <div class="stat-value">${yearlyStats.ammonizioni || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.badGuyRate})</span></div>
+                    <div class="stat-label">AMMONIZIONI</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${player.presenze || 0}</div>
@@ -141,7 +141,7 @@ export async function renderPlayerModal(playerId) {
             </div>
             
             <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-align: center; margin-top: -var(--spacing-2); margin-bottom: var(--spacing-4);">
-                * Le percentuali Rate% si riferiscono all'anno ${currentYear}
+                * Le statistiche tra parentesi si riferiscono all'anno ${currentYear}
             </p>
             
             <div style="margin-bottom: var(--spacing-4);">
