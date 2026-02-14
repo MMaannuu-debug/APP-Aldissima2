@@ -390,7 +390,7 @@ export async function setResults(matchId, results) {
 }
 
 export async function closeMatch(matchId) {
-    const match = await getMatch(matchId);
+    const match = await getMatchWithDetails(matchId);
     if (!match) throw new Error('Partita non trovata');
 
     // Validate required data
