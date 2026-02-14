@@ -92,45 +92,48 @@ function renderClosedMatch(match, players, matches) {
                 <span class="match-status chiusa">Ultima partita</span>
             </div>
             <div class="card-body">
-                <div class="match-teams" style="align-items: flex-start;">
-                    <div class="team">
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--spacing-2) var(--spacing-4); align-items: start;">
+                    <!-- Team Headers & Scores -->
+                    <div style="grid-column: 1; text-align: center;">
                         <div class="team-name rossi">ROSSI</div>
                         <div class="team-score" style="color: ${winner === 'rossi' ? 'var(--color-team-red-dark)' : 'inherit'}">
                             ${match.gol_rossi}
                         </div>
-                        <div class="match-scorers" style="margin-top: var(--spacing-2); min-height: 20px;">
-                            ${renderScorers(rossiScorers)}
-                        </div>
-                        
-                        <!-- List of players in team ROSSI -->
-                        <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-2); border-top: 1px dashed var(--color-border); text-align: left;">
-                            ${match.squadraRossa.map(id => {
-        const p = players.find(pl => pl.id === id);
-        if (!p) return '';
-        return `<div style="font-size: var(--font-size-xs); color: var(--color-team-red-dark); font-weight: 600; padding: 2px 0;">${getPlayerDisplayName(p)}</div>`;
-    }).join('')}
-                        </div>
                     </div>
-                    
-                    <div class="vs" style="margin-top: 15px;">-</div>
-                    
-                    <div class="team">
+
+                    <div class="vs" style="grid-column: 2; margin-top: 15px; font-weight: 700; color: var(--color-text-muted);">-</div>
+
+                    <div style="grid-column: 3; text-align: center;">
                         <div class="team-name blu">BLU</div>
                         <div class="team-score" style="color: ${winner === 'blu' ? 'var(--color-team-blue-dark)' : 'inherit'}">
                             ${match.gol_blu}
                         </div>
-                        <div class="match-scorers" style="margin-top: var(--spacing-2); min-height: 20px;">
-                            ${renderScorers(bluScorers)}
-                        </div>
-                        
-                        <!-- List of players in team BLU -->
-                        <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-2); border-top: 1px dashed var(--color-border); text-align: left;">
-                            ${match.squadraBlu.map(id => {
+                    </div>
+
+                    <!-- Scorers Row -->
+                    <div style="grid-column: 1; text-align: center; min-height: 20px;">
+                        ${renderScorers(rossiScorers)}
+                    </div>
+                    
+                    <div style="grid-column: 3; text-align: center; min-height: 20px;">
+                        ${renderScorers(bluScorers)}
+                    </div>
+
+                    <!-- Player Lists Row -->
+                    <div style="grid-column: 1; margin-top: var(--spacing-1); padding-top: var(--spacing-2); border-top: 1px dashed var(--color-border); text-align: left;">
+                        ${match.squadraRossa.map(id => {
+        const p = players.find(pl => pl.id === id);
+        if (!p) return '';
+        return `<div style="font-size: var(--font-size-xs); color: var(--color-team-red-dark); font-weight: 600; padding: 2px 0;">${getPlayerDisplayName(p)}</div>`;
+    }).join('')}
+                    </div>
+
+                    <div style="grid-column: 3; margin-top: var(--spacing-1); padding-top: var(--spacing-2); border-top: 1px dashed var(--color-border); text-align: left;">
+                        ${match.squadraBlu.map(id => {
         const p = players.find(pl => pl.id === id);
         if (!p) return '';
         return `<div style="font-size: var(--font-size-xs); color: var(--color-team-blue-dark); font-weight: 600; padding: 2px 0;">${getPlayerDisplayName(p)}</div>`;
     }).join('')}
-                        </div>
                     </div>
                 </div>
                 
