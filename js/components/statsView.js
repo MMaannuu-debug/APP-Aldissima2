@@ -79,7 +79,7 @@ export async function renderStats(container, state) {
             <!-- Leaderboard Tabs -->
             <div class="tabs" id="leaderboard-tabs">
                 <button class="tab active" data-category="mvp">🏆 MVP</button>
-                <button class="tab" data-category="presenze">📊 Presenze</button>
+                <button class="tab" data-category="presenze">📊 Partite Rate%</button>
                 <button class="tab" data-category="gol">⚽ Gol</button>
                 <button class="tab" data-category="vittorie">🥇 Vittorie</button>
                 <button class="tab" data-category="ammonizioni">🟨 Ammonizioni</button>

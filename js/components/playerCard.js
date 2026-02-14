@@ -112,7 +112,7 @@ export async function renderPlayerModal(playerId) {
             <div class="stats-grid" style="margin-bottom: var(--spacing-4);">
                 <div class="stat-card">
                     <div class="stat-value">${yearlyStats.presenze || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.percentuale}%)</span></div>
-                    <div class="stat-label">Presenze (${currentYear})</div>
+                    <div class="stat-label">Partite Rate% (${currentYear})</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${player.gol_segnati || 0}</div>
