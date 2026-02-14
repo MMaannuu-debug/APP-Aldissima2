@@ -65,14 +65,14 @@ function renderClosedMatch(match, players, matches) {
         match.gol_blu > match.gol_rossi ? 'blu' : 'pareggio';
 
     // Group scorers
-    const rossiScorers = (match.marcatori || []).filter(m => match.squadraRossa.includes(m.player_id));
-    const bluScorers = (match.marcatori || []).filter(m => match.squadraBlu.includes(m.player_id));
+    const rossiScorers = (match.marcatori || []).filter(m => match.squadraRossa.includes(m.playerId));
+    const bluScorers = (match.marcatori || []).filter(m => match.squadraBlu.includes(m.playerId));
 
     const renderScorers = (scorers) => {
         if (!scorers.length) return '';
         return scorers
             .map(m => {
-                const p = players.find(pl => pl.id === m.player_id);
+                const p = players.find(pl => pl.id === m.playerId);
                 const name = p ? (p.soprannome || p.nome) : '???';
                 return `<div style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">${name} <span style="font-weight: 600; color: var(--color-text-primary);">(${m.gol})</span></div>`;
             })

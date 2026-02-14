@@ -162,16 +162,16 @@ export async function renderMatchModal(matchId) {
 
     // Result if closed
     if (match.stato === STATI.CHIUSA) {
-        const mvpRossi = players.find(p => p.id === match.mvpRossi);
-        const mvpBlu = players.find(p => p.id === match.mvpBlu);
+        const mvpRossi = players.find(p => p.id === match.mvp_rossi);
+        const mvpBlu = players.find(p => p.id === match.mvp_blu);
 
         html += `
             <div style="background: var(--color-border-light); padding: var(--spacing-4); border-radius: var(--radius-lg); margin-bottom: var(--spacing-4); text-align: center;">
                 <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-2);">Risultato finale</div>
                 <div style="font-size: 2.5rem; font-weight: 700;">
-                    <span style="color: var(--color-team-red-dark);">${match.golRossi}</span>
+                    <span style="color: var(--color-team-red-dark);">${match.gol_rossi}</span>
                     <span style="color: var(--color-text-muted);"> - </span>
-                    <span style="color: var(--color-team-blue-dark);">${match.golBlu}</span>
+                    <span style="color: var(--color-team-blue-dark);">${match.gol_blu}</span>
                 </div>
                 
                 <!-- Scorers -->
