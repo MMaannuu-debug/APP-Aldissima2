@@ -134,10 +134,6 @@ export async function renderPlayerModal(playerId) {
                     <div class="stat-value">${yearlyStats.ammonizioni || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.badGuyRate})</span></div>
                     <div class="stat-label">AMMONIZIONI</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value">${player.presenze || 0}</div>
-                    <div class="stat-label">Presenze (Tot)</div>
-                </div>
             </div>
             
             <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-align: center; margin-top: -var(--spacing-2); margin-bottom: var(--spacing-4);">
