@@ -337,13 +337,24 @@ function groupPlayersByResponse(match, players) {
         in_attesa: []
     };
 
-    (match.convocatiIds || []).forEach(playerId => {
+    // 1. First, add everyone who has responded in match.convocazioni
+    Object.entries(match.convocazioni || {}).forEach(([playerId, response]) => {
         const player = players.find(p => p.id === playerId);
         if (!player) return;
 
-        const response = match.convocazioni?.[playerId] || RISPOSTE.IN_ATTESA;
         if (groups[response]) {
             groups[response].push(player);
+        }
+    });
+
+    // 2. Then, check match.convocatiIds for people who haven't responded yet
+    (match.convocatiIds || []).forEach(playerId => {
+        // If they already have a response, they are already handled above
+        if (match.convocazioni && match.convocazioni[playerId]) return;
+
+        const player = players.find(p => p.id === playerId);
+        if (player) {
+            groups.in_attesa.push(player);
         }
     });
 
@@ -712,9 +723,9 @@ function renderConvocationPlayer(player, isConvoked, currentStatus) {
 // ================================
 
 function renderTeamBuilder(match, players, matches) {
-    const presentPlayers = (match.convocatiIds || [])
-        .filter(id => match.convocazioni?.[id] === RISPOSTE.PRESENTE)
-        .map(id => players.find(p => p.id === id))
+    const presentPlayers = Object.entries(match.convocazioni || {})
+        .filter(([_, status]) => status === RISPOSTE.PRESENTE)
+        .map(([id, _]) => players.find(p => p.id === id))
         .filter(Boolean);
 
     const rossiIds = match.squadraRossa || [];

@@ -3,7 +3,7 @@
 // ================================
 
 import { store } from '../store.js';
-import { getLeaderboard, getMatchesStats, exportPlayersToExcel, exportMatchesToExcel, exportLeaderboardToExcel, getPlayerYearlyStats } from '../stats.js';
+import { getLeaderboard, getMatchesStats, exportPlayersToExcel, exportMatchesToExcel, exportLeaderboardToExcel, getPlayerYearlyStats, exportStatsToXlsx } from '../stats.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { STATI } from '../matches.js';
 
@@ -96,16 +96,13 @@ export async function renderStats(container, state) {
                     <div class="section-header">
                         <h2 class="section-title">Esporta dati</h2>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-3);">
-                        <button class="btn btn-secondary btn-sm" id="export-players-btn" style="flex: 1; min-width: 140px;">
-                            📥 Giocatori
+                    <div style="display: flex; flex-direction: column; gap: var(--spacing-3);">
+                        <button class="btn btn-primary" id="export-all-xlsx-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: var(--spacing-2); padding: var(--spacing-4);">
+                            <span style="font-size: 1.2rem;">📊</span> Esporta Resoconto Completo (.xlsx)
                         </button>
-                        <button class="btn btn-secondary btn-sm" id="export-matches-btn" style="flex: 1; min-width: 140px;">
-                            📥 Partite
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="export-leaderboard-btn" style="flex: 1; min-width: 140px;">
-                            📥 Classifiche
-                        </button>
+                        <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-align: center;">
+                            Genera un file Excel con Classifiche (ordinate per ALDINDEX) e Riepilogo Partite.
+                        </p>
                     </div>
                 </div>
             ` : ''}
@@ -127,16 +124,8 @@ export async function renderStats(container, state) {
 
     // Export handlers
     if (isAdmin) {
-        document.getElementById('export-players-btn')?.addEventListener('click', () => {
-            exportPlayersToExcel(players, matches);
-        });
-
-        document.getElementById('export-matches-btn')?.addEventListener('click', () => {
-            exportMatchesToExcel(matches);
-        });
-
-        document.getElementById('export-leaderboard-btn')?.addEventListener('click', () => {
-            exportLeaderboardToExcel(players, matches);
+        document.getElementById('export-all-xlsx-btn')?.addEventListener('click', () => {
+            exportStatsToXlsx(players, matches);
         });
     }
 }

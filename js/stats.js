@@ -88,7 +88,11 @@ export function getPlayerYearlyStats(player, matches) {
     if (closedYearMatches.length === 0) {
         return {
             aldIndex: 0,
+            puntiPartita: 0,
             presenze: 0,
+            vittorie: 0,
+            pareggi: 0,
+            sconfitte: 0,
             totali: 0,
             percentuale: 0,
             gol: 0,
@@ -144,6 +148,20 @@ export function getPlayerYearlyStats(player, matches) {
         return sum + points;
     }, 0);
 
+    // Detailed stats for export
+    const winResults = playerMatches.filter(m => {
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const winner = m.gol_rossi > m.gol_blu ? 'rossi' : (m.gol_blu > m.gol_rossi ? 'blu' : 'pareggio');
+        return (winner === 'rossi' && isRossi) || (winner === 'blu' && !isRossi);
+    }).length;
+
+    const drawResults = playerMatches.filter(m => {
+        return m.gol_rossi === m.gol_blu;
+    }).length;
+
+    const lossResults = presenze - winResults - drawResults;
+    const puntiPartita = (winResults * 3) + (drawResults * 1);
+
     const calculateRate = (value, count) => {
         if (!count) return 0;
         return Math.round((value / count) * 100);
@@ -156,7 +174,11 @@ export function getPlayerYearlyStats(player, matches) {
 
     return {
         aldIndex,
+        puntiPartita,
         presenze,
+        vittorie: winResults,
+        pareggi: drawResults,
+        sconfitte: lossResults,
         totali: closedYearMatches.length,
         percentuale: calculateRate(presenze, closedYearMatches.length),
         gol,
@@ -363,11 +385,69 @@ export function exportLeaderboardToExcel(players, matches) {
     exportToExcel(data, 'classifiche_calcetto');
 }
 
+export function exportStatsToXlsx(players, matches) {
+    if (typeof XLSX === 'undefined') {
+        console.error('SheetJS (XLSX) library not loaded');
+        // Fallback to old CSV/XLS format if library missing
+        exportLeaderboardToExcel(players, matches);
+        return;
+    }
+
+    const currentYear = new Date().getFullYear();
+
+    // 1. CLASSICHE SHEET
+    const classificheData = players.map(p => {
+        const stats = getPlayerYearlyStats(p, matches);
+        return {
+            'Nome': p.nome,
+            'Cognome': p.cognome,
+            'Soprannome': p.soprannome || '',
+            'Ruolo 1': p.ruolo_principale || '',
+            'Ruolo 2': p.ruolo_secondario || '',
+            'Tipologia': (p.tipologia || 'riserva').charAt(0).toUpperCase() + (p.tipologia || 'riserva').slice(1),
+            'ALDINDEX': stats.aldIndex,
+            'PT': stats.puntiPartita,
+            'G': stats.presenze,
+            'V': stats.vittorie,
+            'N': stats.pareggi,
+            'P': stats.sconfitte,
+            'GF': stats.gol,
+            'Punti MVP': stats.mvpPoints,
+            'Ammonizioni': stats.ammonizioni
+        };
+    }).sort((a, b) => b.ALDINDEX - a.ALDINDEX);
+
+    // 2. PARTITE SHEET
+    const partiteData = matches.filter(m => m.stato === STATI.CHIUSA).map(m => ({
+        'Data': m.data,
+        'Orario': m.orario,
+        'Luogo': m.luogo,
+        'Tipologia': m.tipologia,
+        'Gol Rossi': m.gol_rossi,
+        'Gol Blu': m.gol_blu,
+        'Risultato': getMatchResult(m).toUpperCase(),
+        'MVP Rossi': players.find(p => p.id === m.mvp_rossi)?.nome || '',
+        'MVP Blu': players.find(p => p.id === m.mvp_blu)?.nome || ''
+    }));
+
+    // Create workbook and add sheets
+    const wb = XLSX.utils.book_new();
+    const wsClassifiche = XLSX.utils.json_to_sheet(classificheData);
+    const wsPartite = XLSX.utils.json_to_sheet(partiteData);
+
+    XLSX.utils.book_append_sheet(wb, wsClassifiche, "Classifiche");
+    XLSX.utils.book_append_sheet(wb, wsPartite, "Partite");
+
+    // Generate and download
+    XLSX.writeFile(wb, `Aldissima_Export_${currentYear}.xlsx`);
+}
+
 export default {
     updatePlayerStats,
     getLeaderboard,
     getMatchesStats,
     exportPlayersToExcel,
     exportMatchesToExcel,
-    exportLeaderboardToExcel
+    exportLeaderboardToExcel,
+    exportStatsToXlsx
 };
