@@ -2,8 +2,8 @@
 // MATCHES MODULE
 // ================================
 
-import { db } from '../supabase/client.js';
-import { store } from '../store.js';
+import db from './db.js';
+import { store } from './store.js';
 import { generaCommentoPartita } from './utils/aiCommentary.js';
 
 const COLLECTION = 'matches';
@@ -401,7 +401,32 @@ export async function closeMatch(matchId) {
         throw new Error('Seleziona gli MVP prima di chiudere');
     }
 
-    return await updateMatch(matchId, { stato: STATI.CHIUSA });
+    // 1. Generate AI Commentary
+    let commento = null;
+    try {
+        const players = store.getState().players;
+        commento = generaCommentoPartita(match, players);
+    } catch (e) {
+        console.error("Errore generazione commento:", e);
+        commento = "Partita conclusa.";
+    }
+
+    // 2. Update match status and commentary
+    const supabase = db.getClient();
+    const { error } = await supabase
+        .from('matches')
+        .update({
+            stato: STATI.CHIUSA,
+            commento: commento
+        })
+        .eq('id', matchId);
+
+    if (error) throw error;
+
+    // 3. Update player stats
+    await updatePlayerStats(match);
+
+    return true;
 }
 
 export async function reopenMatch(matchId) {
