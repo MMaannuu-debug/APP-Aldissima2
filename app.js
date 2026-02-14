@@ -103,8 +103,11 @@ function navigateTo(page) {
     renderPage(page);
 }
 
-async function renderPage(page) {
+export async function renderPage(page) {
     const state = store.getState();
+    const container = elements.mainContent;
+
+    if (!container) return;
 
     switch (page) {
         case 'dashboard':
@@ -129,6 +132,11 @@ async function renderPage(page) {
         default:
             navigateTo('dashboard');
     }
+}
+
+export async function refreshCurrentPage() {
+    const state = store.getState();
+    await renderPage(state.currentPage || 'dashboard');
 }
 
 // ================================

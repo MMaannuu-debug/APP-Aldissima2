@@ -5,7 +5,7 @@
 import { store } from '../store.js';
 import db from '../db.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
-import { showToast } from '../../app.js';
+import { showToast, refreshCurrentPage } from '../../app.js';
 import { escapeHtml } from '../utils.js';
 
 export async function renderAdmin(container, state) {
@@ -167,6 +167,7 @@ export async function renderAdmin(container, state) {
                 const players = await db.getAll('players');
                 store.setState({ players });
                 showToast('Ruolo aggiornato', 'success');
+                refreshCurrentPage();
             } catch (error) {
                 showToast('Errore: ' + error.message, 'error');
             }
@@ -184,7 +185,7 @@ export async function renderAdmin(container, state) {
                 const players = await db.getAll('players');
                 store.setState({ players });
                 showToast(isBlocked ? 'Utente sbloccato' : 'Utente bloccato', 'success');
-                renderAdmin(container, store.getState());
+                refreshCurrentPage();
             } catch (error) {
                 showToast('Errore: ' + error.message, 'error');
             }

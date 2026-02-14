@@ -12,7 +12,7 @@ import {
     RUOLI
 } from '../players.js';
 import { getPlayerYearlyStats } from '../stats.js';
-import { showModal, closeModal, showToast } from '../../app.js';
+import { showModal, closeModal, showToast, refreshCurrentPage } from '../../app.js';
 
 export async function renderPlayers(container, state) {
     const { players, currentUser } = state;
@@ -430,10 +430,7 @@ function setupPlayerFormHandlers(existingPlayer) {
             store.setState({ players });
 
             closeModal();
-
-            // Re-render current page
-            const container = document.getElementById('main-content');
-            renderPlayers(container, store.getState());
+            refreshCurrentPage();
 
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
@@ -450,10 +447,7 @@ function setupPlayerFormHandlers(existingPlayer) {
             store.setState({ players });
             showToast('Giocatore eliminato', 'success');
             closeModal();
-
-            // Re-render
-            const container = document.getElementById('main-content');
-            renderPlayers(container, store.getState());
+            refreshCurrentPage();
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }

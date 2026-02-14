@@ -26,7 +26,7 @@ import {
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { createBalancedTeams, calculateBalance, getTeamStats } from '../teams.js';
 import { updatePlayerStats } from '../stats.js';
-import { showModal, closeModal, showToast } from '../../app.js';
+import { showModal, closeModal, showToast, refreshCurrentPage } from '../../app.js';
 import { escapeHtml } from '../utils.js';
 
 export async function renderMatches(container, state) {
@@ -603,6 +603,7 @@ export function renderMatchForm(match) {
             } else {
                 closeModal();
             }
+            refreshCurrentPage();
         } catch (error) {
             console.error('Save match error:', error);
             showToast('Errore Salvataggio: ' + error.message, 'error');
@@ -683,6 +684,7 @@ function renderConvocationModal(match, players) {
             await getAllMatches();
             showToast('Convocazioni salvate!', 'success');
             renderMatchModal(match.id); // Refresh modal
+            refreshCurrentPage();
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -894,6 +896,7 @@ function renderTeamBuilder(match, players, matches) {
             await setTeams(match.id, assignments.rossi, assignments.blu);
             showToast('Squadre salvate!', 'success');
             renderMatchModal(match.id);
+            refreshCurrentPage();
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
@@ -1072,6 +1075,7 @@ function renderResultsForm(match, players) {
 
             showToast('Partita chiusa!', 'success');
             renderMatchModal(match.id); // Refresh modal
+            refreshCurrentPage();
         } catch (error) {
             showToast('Errore: ' + error.message, 'error');
         }
