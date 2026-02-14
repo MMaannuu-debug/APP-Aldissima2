@@ -431,7 +431,8 @@ export async function closeMatch(matchId) {
     console.log('✅ Commento salvato con successo!');
 
     // 3. Update player stats
-    await stats.updatePlayerStats(match);
+    const players = store.getState().players || [];
+    await stats.updatePlayerStats(match, players);
 
     return true;
 }
