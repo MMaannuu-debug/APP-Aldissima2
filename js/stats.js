@@ -58,9 +58,7 @@ export async function updatePlayerStats(match, players) {
         const statsUpdate = {
             punti_mvp: (player.punti_mvp || 0) + (isMvpRossi || isMvpBlu ? (isWinner ? 3 : 1) : 0),
             partite_vinte: (player.partite_vinte || 0) + (isWinner ? 1 : 0),
-            partite_pareggiate: (player.partite_pareggiate || 0) + (isDraw ? 1 : 0),
             presenze: (player.presenze || 0) + 1,
-            ald_index: (player.ald_index || 0) + aldPoints,
             gol_segnati: (player.gol_segnati || 0) + playerGoals,
             ammonizioni_ricevute: (player.ammonizioni_ricevute || 0) + yellowCards,
             partite_rossi: (player.partite_rossi || 0) + (isRossi ? 1 : 0),
