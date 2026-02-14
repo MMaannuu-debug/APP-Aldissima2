@@ -11,6 +11,7 @@ import {
     getRoleLabel,
     RUOLI
 } from '../players.js';
+import { getPlayerYearlyStats } from '../stats.js';
 import { showModal, closeModal, showToast } from '../../app.js';
 
 export async function renderPlayers(container, state) {
@@ -84,8 +85,12 @@ export async function renderPlayerModal(playerId) {
     }
 
     const isAdmin = store.isAdmin();
+    const matches = store.getState().matches;
     const isSelf = store.getState().currentUser?.id === playerId;
     const canEdit = isAdmin || isSelf;
+
+    const yearlyStats = getPlayerYearlyStats(player, matches);
+    const currentYear = new Date().getFullYear();
 
     const html = `
         <div class="modal-header">
@@ -106,8 +111,8 @@ export async function renderPlayerModal(playerId) {
             
             <div class="stats-grid" style="margin-bottom: var(--spacing-4);">
                 <div class="stat-card">
-                    <div class="stat-value">${player.presenze || 0}</div>
-                    <div class="stat-label">Presenze</div>
+                    <div class="stat-value">${yearlyStats.presenze || 0} <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary); font-weight: 400;">(${yearlyStats.percentuale}%)</span></div>
+                    <div class="stat-label">Presenze (${currentYear})</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value">${player.gol_segnati || 0}</div>

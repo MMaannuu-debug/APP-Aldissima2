@@ -73,6 +73,33 @@ export async function updatePlayerStats(match, players) {
     return updates;
 }
 
+export function getPlayerYearlyStats(player, matches) {
+    const currentYear = new Date().getFullYear();
+    const closedYearMatches = matches.filter(m =>
+        m.stato === STATI.CHIUSA &&
+        new Date(m.data).getFullYear() === currentYear
+    );
+
+    if (closedYearMatches.length === 0) {
+        return {
+            presenze: 0,
+            totali: 0,
+            percentuale: 0
+        };
+    }
+
+    const presenze = closedYearMatches.filter(m =>
+        (m.squadraRossa || []).includes(player.id) ||
+        (m.squadraBlu || []).includes(player.id)
+    ).length;
+
+    return {
+        presenze,
+        totali: closedYearMatches.length,
+        percentuale: Math.round((presenze / closedYearMatches.length) * 100)
+    };
+}
+
 // ================================
 // Leaderboards
 // ================================
@@ -202,21 +229,26 @@ export function exportToExcel(data, filename) {
     link.click();
 }
 
-export function exportPlayersToExcel(players) {
-    const data = players.map(p => ({
-        Nome: p.nome,
-        Cognome: p.cognome,
-        Soprannome: p.soprannome || '',
-        Ruolo: p.ruolo_principale || '',
-        Tipologia: p.tipologia || '',
-        'Punti MVP': p.punti_mvp || 0,
-        'Partite Vinte': p.partite_vinte || 0,
-        Presenze: p.presenze || 0,
-        Gol: p.gol_segnati || 0,
-        Ammonizioni: p.ammonizioni_ricevute || 0,
-        'Partite Rossi': p.partite_rossi || 0,
-        'Partite Blu': p.partite_blu || 0
-    }));
+export function exportPlayersToExcel(players, matches) {
+    const currentYear = new Date().getFullYear();
+    const data = players.map(p => {
+        const yearly = matches ? getPlayerYearlyStats(p, matches) : null;
+        return {
+            Nome: p.nome,
+            Cognome: p.cognome,
+            Soprannome: p.soprannome || '',
+            Ruolo: p.ruolo_principale || '',
+            Tipologia: p.tipologia || '',
+            'Punti MVP': p.punti_mvp || 0,
+            'Partite Vinte': p.partite_vinte || 0,
+            [`Presenze (${currentYear})`]: yearly ? yearly.presenze : p.presenze || 0,
+            'Percentuale Presenze': yearly ? `${yearly.percentuale}%` : '-',
+            Gol: p.gol_segnati || 0,
+            Ammonizioni: p.ammonizioni_ricevute || 0,
+            'Partite Rossi': p.partite_rossi || 0,
+            'Partite Blu': p.partite_blu || 0
+        };
+    });
 
     exportToExcel(data, 'giocatori_calcetto');
 }
@@ -235,20 +267,24 @@ export function exportMatchesToExcel(matches) {
     exportToExcel(data, 'partite_calcetto');
 }
 
-export function exportLeaderboardToExcel(players) {
-    // Collect all data in one sheet vertically? Or just export MVP for now?
-    // User requested "export delle classifiche", let's export all main stats
+export function exportLeaderboardToExcel(players, matches) {
+    const currentYear = new Date().getFullYear();
+    const data = players.map(p => {
+        const yearly = matches ? getPlayerYearlyStats(p, matches) : null;
+        const presenze = yearly ? yearly.presenze : p.presenze || 0;
 
-    const data = players.map(p => ({
-        Giocatore: `${p.nome} ${p.cognome}`,
-        'Punti MVP': p.punti_mvp || 0,
-        Presenze: p.presenze || 0,
-        Gol: p.gol_segnati || 0,
-        Vittorie: p.partite_vinte || 0,
-        Ammonizioni: p.ammonizioni_ricevute || 0,
-        'Media Gol': p.presenze ? (p.gol_segnati / p.presenze).toFixed(2) : 0,
-        'Win Rate %': p.presenze ? ((p.partite_vinte / p.presenze) * 100).toFixed(1) : 0
-    }));
+        return {
+            Giocatore: `${p.nome} ${p.cognome}`,
+            'Punti MVP': p.punti_mvp || 0,
+            [`Presenze (${currentYear})`]: presenze,
+            'Percentuale Presenze': yearly ? `${yearly.percentuale}%` : '-',
+            Gol: p.gol_segnati || 0,
+            Vittorie: p.partite_vinte || 0,
+            Ammonizioni: p.ammonizioni_ricevute || 0,
+            'Media Gol': presenze ? (p.gol_segnati / presenze).toFixed(2) : 0,
+            'Win Rate %': presenze ? ((p.partite_vinte / presenze) * 100).toFixed(1) : 0
+        };
+    });
 
     exportToExcel(data, 'classifiche_calcetto');
 }

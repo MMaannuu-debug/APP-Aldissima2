@@ -3,7 +3,7 @@
 // ================================
 
 import { store } from '../store.js';
-import { getLeaderboard, getMatchesStats, exportPlayersToExcel, exportMatchesToExcel, exportLeaderboardToExcel } from '../stats.js';
+import { getLeaderboard, getMatchesStats, exportPlayersToExcel, exportMatchesToExcel, exportLeaderboardToExcel, getPlayerYearlyStats } from '../stats.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { STATI } from '../matches.js';
 
@@ -86,7 +86,7 @@ export async function renderStats(container, state) {
             </div>
             
             <div class="card" id="leaderboard-container">
-                ${renderLeaderboard(players, 'mvp')}
+                ${renderLeaderboard(players, 'mvp', matches)}
             </div>
             
             ${isAdmin ? `
@@ -119,14 +119,14 @@ export async function renderStats(container, state) {
             tab.classList.add('active');
 
             const category = tab.dataset.category;
-            document.getElementById('leaderboard-container').innerHTML = renderLeaderboard(players, category);
+            document.getElementById('leaderboard-container').innerHTML = renderLeaderboard(players, category, matches);
         });
     });
 
     // Export handlers
     if (isAdmin) {
         document.getElementById('export-players-btn')?.addEventListener('click', () => {
-            exportPlayersToExcel(players);
+            exportPlayersToExcel(players, matches);
         });
 
         document.getElementById('export-matches-btn')?.addEventListener('click', () => {
@@ -134,16 +134,33 @@ export async function renderStats(container, state) {
         });
 
         document.getElementById('export-leaderboard-btn')?.addEventListener('click', () => {
-            exportLeaderboardToExcel(players);
+            exportLeaderboardToExcel(players, matches);
         });
     }
 }
 
-function renderLeaderboard(players, category) {
-    // Show all players (limit 100 for safety, but effectively unlimited for this use case)
-    const leaderboard = getLeaderboard(players, category, 100);
+function renderLeaderboard(players, category, matches) {
+    let leaderboardData;
 
-    if (leaderboard.length === 0) {
+    if (category === 'presenze') {
+        leaderboardData = players.map(p => {
+            const stats = getPlayerYearlyStats(p, matches);
+            return {
+                player: p,
+                value: stats.presenze,
+                percentuale: stats.percentuale
+            };
+        })
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 100);
+    } else {
+        leaderboardData = getLeaderboard(players, category, 100).map(item => ({
+            player: item.player,
+            value: item.value
+        }));
+    }
+
+    if (leaderboardData.length === 0) {
         return `
             <div class="card-body">
                 <div class="empty-state" style="padding: var(--spacing-6);">
@@ -155,33 +172,30 @@ function renderLeaderboard(players, category) {
         `;
     }
 
-    const categoryLabels = {
-        mvp: 'Punti MVP',
-        presenze: 'Presenze',
-        gol: 'Gol',
-        vittorie: 'Vittorie',
-        ammonizioni: 'Ammonizioni'
-    };
-
     return `
         <ul class="leaderboard">
-            ${leaderboard.map((item, index) => `
+            ${leaderboardData.map((item, index) => {
+        const displayValue = category === 'presenze'
+            ? `${item.value} <span style="font-size: 0.8em; opacity: 0.7;">(${item.percentuale}%)</span>`
+            : item.value;
+
+        return `
                 <li class="leaderboard-item">
                     <div class="leaderboard-rank ${index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : ''}">
                         ${index + 1}
                     </div>
                     <div class="player-avatar" style="width: 40px; height: 40px;">
                         ${item.player.foto
-            ? `<img src="${item.player.foto}" alt="${getPlayerDisplayName(item.player)}">`
-            : getPlayerInitials(item.player)
-        }
+                ? `<img src="${item.player.foto}" alt="${getPlayerDisplayName(item.player)}">`
+                : getPlayerInitials(item.player)
+            }
                     </div>
                     <div class="leaderboard-info">
                         <div class="leaderboard-name">${getPlayerDisplayName(item.player)}</div>
                     </div>
-                    <div class="leaderboard-value">${item.value}</div>
+                    <div class="leaderboard-value">${displayValue}</div>
                 </li>
-            `).join('')}
+            `}).join('')}
         </ul>
     `;
 }
