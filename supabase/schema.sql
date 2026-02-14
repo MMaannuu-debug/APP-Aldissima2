@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS public.matches (
     numero_partita INTEGER, -- Serial number within the year
     marcatori JSONB DEFAULT '[]',
     ammonizioni JSONB DEFAULT '[]',
+    commento TEXT,
+
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

@@ -2,8 +2,9 @@
 // MATCHES MODULE
 // ================================
 
-import db from './db.js';
-import { store } from './store.js';
+import { db } from '../supabase/client.js';
+import { store } from '../store.js';
+import { generaCommentoPartita } from './utils/aiCommentary.js';
 
 const COLLECTION = 'matches';
 

@@ -138,25 +138,31 @@ function renderClosedMatch(match, players, matches) {
                 </div>
                 
                 ${mvpRossi || mvpBlu ? `
-                    <div style="display: flex; justify-content: center; gap: var(--spacing-6); margin-top: var(--spacing-4); padding-top: var(--spacing-4); border-top: 1px solid var(--color-border);">
-                        ${mvpRossi ? `
-                            <div style="text-align: center;">
-                                <span style="font-size: 1.5rem;">🏆</span>
-                                <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">MVP Rossi</div>
-                                <div style="font-weight: 600; color: var(--color-team-red-dark);">
-                                    ${getPlayerDisplayName(mvpRossi)}
+                    <div style="margin-top: var(--spacing-4); padding-top: var(--spacing-4); border-top: 1px solid var(--color-border); text-align: center;">
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-2);">MVP del Match</div>
+                        <div style="display: flex; gap: var(--spacing-4); justify-content: center;">
+                            ${mvpRossi ? `
+                                <div style="display: flex; align-items: center; gap: var(--spacing-2);">
+                                    <span style="font-size: 1.2rem;">🏆</span>
+                                    <span style="font-weight: 700; color: var(--color-team-red-dark);">${getPlayerDisplayName(mvpRossi)}</span>
                                 </div>
-                            </div>
-                        ` : ''}
-                        ${mvpBlu ? `
-                            <div style="text-align: center;">
-                                <span style="font-size: 1.5rem;">🏆</span>
-                                <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">MVP Blu</div>
-                                <div style="font-weight: 600; color: var(--color-team-blue-dark);">
-                                    ${getPlayerDisplayName(mvpBlu)}
+                            ` : ''}
+                            ${mvpBlu ? `
+                                <div style="display: flex; align-items: center; gap: var(--spacing-2);">
+                                    <span style="font-size: 1.2rem;">🏆</span>
+                                    <span style="font-weight: 700; color: var(--color-team-blue-dark);">${getPlayerDisplayName(mvpBlu)}</span>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${match.commento ? `
+                    <div style="margin-top: var(--spacing-4); padding: var(--spacing-3); background: var(--color-bg); border-radius: var(--radius-md); border-left: 4px solid var(--color-primary);">
+                         <div style="font-size: var(--font-size-xs); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-1); font-weight: 700;">Cronaca della Partita</div>
+                        <p style="font-size: var(--font-size-sm); color: var(--color-text-primary); font-style: italic; line-height: 1.5;">
+                            "${match.commento}"
+                        </p>
                     </div>
                 ` : ''}
             </div>
