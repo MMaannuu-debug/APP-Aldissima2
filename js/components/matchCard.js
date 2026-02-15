@@ -980,6 +980,16 @@ function renderResultsForm(match, players) {
             </div>
             
             <div class="form-group">
+                <label>Marcatori (opzionale)</label>
+                <div id="scorers-list">
+                    ${(match.marcatori || []).map((m, i) => renderScorerRow(m, allMatchPlayers, i, match)).join('')}
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="add-scorer-btn" style="margin-top: var(--spacing-2);">
+                    + Aggiungi marcatore
+                </button>
+            </div>
+
+            <div class="form-group">
                 <label>MVP Rossi</label>
                 <select id="rf-mvp-rossi">
                     <option value="">Seleziona...</option>
@@ -1001,16 +1011,6 @@ function renderResultsForm(match, players) {
                         </option>
                     `).join('')}
                 </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Marcatori (opzionale)</label>
-                <div id="scorers-list">
-                    ${(match.marcatori || []).map((m, i) => renderScorerRow(m, allMatchPlayers, i, match)).join('')}
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm" id="add-scorer-btn" style="margin-top: var(--spacing-2);">
-                    + Aggiungi marcatore
-                </button>
             </div>
             
             <div class="form-group">
@@ -1137,12 +1137,19 @@ function renderScorerRow(scorer, players, index, match) {
                 <option value="">Seleziona giocatore</option>
                 ${players.map(p => {
         let nameStyle = '';
-        if (match?.squadraRossa?.includes(p.id)) nameStyle = 'color: var(--color-team-red-dark); font-weight: bold;';
-        if (match?.squadraBlu?.includes(p.id)) nameStyle = 'color: var(--color-team-blue-dark); font-weight: bold;';
+        let prefix = '';
+        if (match?.squadraRossa?.includes(p.id)) {
+            nameStyle = 'color: var(--color-team-red-dark); background-color: var(--color-team-red); font-weight: bold;';
+            prefix = '🔴 ';
+        }
+        if (match?.squadraBlu?.includes(p.id)) {
+            nameStyle = 'color: var(--color-team-blue-dark); background-color: var(--color-team-blue); font-weight: bold;';
+            prefix = '🔵 ';
+        }
 
         return `
                     <option value="${p.id}" ${scorer.playerId === p.id ? 'selected' : ''} style="${nameStyle}">
-                        ${getPlayerDisplayName(p)}
+                        ${prefix}${getPlayerDisplayName(p)}
                     </option>
                 `}).join('')}
             </select>
