@@ -34,7 +34,8 @@ export async function getPlayer(id) {
 export async function createPlayer(playerData) {
     const newPlayer = {
         ...getDefaultPlayerData(),
-        ...playerData
+        ...playerData,
+        email: playerData.email || null
     };
 
     const saved = await db.add(COLLECTION, newPlayer);
@@ -47,6 +48,7 @@ export async function createPlayer(playerData) {
 }
 
 export async function updatePlayer(id, updates) {
+    if (updates.email === '') updates.email = null;
     const updated = await db.update(COLLECTION, id, updates);
 
     // Update store

@@ -366,7 +366,7 @@ function setupPlayerFormHandlers(existingPlayer) {
             cognome: document.getElementById('pf-cognome').value.trim(),
             soprannome: document.getElementById('pf-soprannome').value.trim(),
             telefono: document.getElementById('pf-telefono').value.trim(),
-            email: document.getElementById('pf-email').value.trim(),
+            email: document.getElementById('pf-email').value.trim() || null,
             data_nascita: document.getElementById('pf-data-nascita').value,
             ruolo_principale: document.getElementById('pf-ruolo1').value,
             ruolo_secondario: document.getElementById('pf-ruolo2').value
