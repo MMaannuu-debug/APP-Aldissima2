@@ -121,7 +121,7 @@ export async function register(userData) {
         cognome: userData.cognome.trim(),
         soprannome: userData.soprannome?.trim() || '',
         telefono: userData.telefono.trim(),
-        email: userData.email?.trim() || '',
+        email: userData.email?.trim() || null,
         password_numeric: userData.password,
         ruolo: 'operatore', // Default role
         tipologia: 'riserva', // Default type
