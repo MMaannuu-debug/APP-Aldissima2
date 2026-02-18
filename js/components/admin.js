@@ -7,8 +7,11 @@ import db from '../db.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { showToast, refreshCurrentPage } from '../../app.js';
 import { escapeHtml } from '../utils.js';
+import { APP_VERSION, DB_TYPE } from '../config.js';
+import { exportDataToJSON, importDataFromJSON } from '../backup.js';
 
 export async function renderAdmin(container, state) {
+    console.log('Rendering Admin Page...', { version: APP_VERSION, db: DB_TYPE });
     const { players } = state;
 
     // Sort by name
@@ -23,6 +26,7 @@ export async function renderAdmin(container, state) {
             <!-- Quick Actions -->
             <div class="admin-section">
                 <h3 style="margin-bottom: var(--spacing-3);">Azioni rapide</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
                     <button class="admin-btn" id="admin-create-match">
                         <span class="admin-btn-icon">📊</span>
                         <span class="admin-btn-label">Nuova partita</span>
@@ -31,15 +35,27 @@ export async function renderAdmin(container, state) {
                         <span class="admin-btn-icon">👤</span>
                         <span class="admin-btn-label">Nuovo giocatore</span>
                     </button>
+                    <button class="admin-btn" id="admin-export-json">
+                        <span class="admin-btn-icon">💾</span>
+                        <span class="admin-btn-label">Backup JSON</span>
+                    </button>
+                    <button class="admin-btn" id="admin-import-json">
+                        <span class="admin-btn-icon">📥</span>
+                        <span class="admin-btn-label">Ripristina</span>
+                    </button>
                     <button class="admin-btn" id="admin-export">
                         <span class="admin-btn-icon">📦</span>
-                        <span class="admin-btn-label">Esporta dati</span>
+                        <span class="admin-btn-label">Excel (View)</span>
                     </button>
                     <button class="admin-btn" id="admin-clear-data">
                         <span class="admin-btn-icon">🗑️</span>
                         <span class="admin-btn-label">Reset dati</span>
                     </button>
                 </div>
+                
+                <!-- Hidden file input for restore -->
+                <input type="file" id="admin-restore-file" accept=".json" style="display: none;">
+                
                 <button class="btn btn-secondary btn-sm" id="admin-generate-test" style="width: 100%; border-style: dashed; margin-top: var(--spacing-3);">
                      <span>🧪 Genera Dati Test (20 Giocatori + Storico)</span>
                 </button>
@@ -89,8 +105,8 @@ export async function renderAdmin(container, state) {
                     <div class="card-body">
                         <h4 style="margin-bottom: var(--spacing-2);">ℹ️ Info sistema</h4>
                         <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">
-                            Calcetto Manager v1.0<br>
-                            Database: LocalStorage (locale)<br>
+                            Calcetto Manager ${APP_VERSION}<br>
+                            Database: ${DB_TYPE} (cloud)<br>
                             Giocatori: ${players.length}<br>
                             Partite: ${state.matches.length}
                         </p>
@@ -116,12 +132,41 @@ export async function renderAdmin(container, state) {
         renderPlayerForm(null);
     });
 
-    // Export
+    // Export Excel
     document.getElementById('admin-export')?.addEventListener('click', async () => {
         const { exportPlayersToExcel, exportMatchesToExcel } = await import('../stats.js');
         exportPlayersToExcel(players);
         setTimeout(() => exportMatchesToExcel(state.matches), 500);
-        showToast('Esportazione avviata', 'success');
+        showToast('Esportazione Excel avviata', 'success');
+    });
+
+    // Backup JSON
+    document.getElementById('admin-export-json')?.addEventListener('click', async () => {
+        try {
+            await exportDataToJSON();
+            showToast('Backup JSON creato con successo', 'success');
+        } catch (error) {
+            showToast(error.message, 'error');
+        }
+    });
+
+    // Import JSON (triggers file selection)
+    const fileInput = document.getElementById('admin-restore-file');
+    document.getElementById('admin-import-json')?.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    fileInput?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            await importDataFromJSON(file);
+            // Reload happens inside importDataFromJSON
+        } catch (error) {
+            showToast(error.message, 'error');
+            fileInput.value = ''; // Reset input
+        }
     });
 
     // Clear data
