@@ -9,10 +9,14 @@ import { showToast, refreshCurrentPage } from '../../app.js';
 import { escapeHtml } from '../utils.js';
 import { APP_VERSION, DB_TYPE } from '../config.js';
 import { exportDataToJSON, importDataFromJSON } from '../backup.js';
+import { getDatabaseUsage } from '../db-usage.js';
 
 export async function renderAdmin(container, state) {
     console.log('Rendering Admin Page...', { version: APP_VERSION, db: DB_TYPE });
     const { players } = state;
+
+    // Get DB usage data
+    const dbUsage = await getDatabaseUsage();
 
     // Sort by name
     const sortedPlayers = [...players].sort((a, b) => a.nome.localeCompare(b.nome));
@@ -103,13 +107,28 @@ export async function renderAdmin(container, state) {
             <div class="admin-section">
                 <div class="card">
                     <div class="card-body">
-                        <h4 style="margin-bottom: var(--spacing-2);">ℹ️ Info sistema</h4>
-                        <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-2);">
+                            <h4 style="margin: 0;">ℹ️ Info sistema</h4>
+                            <button id="admin-refresh-db-usage" class="btn btn-icon" title="Aggiorna stima spazio" style="padding: 4px; font-size: 0.9rem;">🔄</button>
+                        </div>
+                        <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-3);">
                             Calcetto Manager ${APP_VERSION}<br>
                             Database: ${DB_TYPE} (cloud)<br>
                             Giocatori: ${players.length}<br>
                             Partite: ${state.matches.length}
                         </p>
+
+                        <h4 style="margin-bottom: var(--spacing-2); font-size: 0.9rem;">Utilizzo Database (Piano Free 500MB)</h4>
+                        <div style="background: var(--color-bg-secondary); border-radius: var(--radius-sm); height: 8px; width: 100%; margin-bottom: var(--spacing-1); overflow: hidden;">
+                            <div style="background: ${dbUsage?.error ? 'var(--color-error)' : (parseFloat(dbUsage?.percentage) > 80 ? 'var(--color-error)' : 'var(--color-primary)')}; width: ${dbUsage?.percentage || 0}%; height: 100%; transition: width 0.3s ease;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--color-text-secondary);">
+                            <span>${dbUsage?.error ? 'Errore' : (dbUsage ? `${dbUsage.mb} MB` : 'In calcolo...')}</span>
+                            <span>${dbUsage?.error ? '-' : (dbUsage ? `${dbUsage.percentage}%` : '-')}</span>
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: 4px; text-align: right;">
+                            ${dbUsage?.error ? `<span style="color: var(--color-error)">Riconnetti Supabase</span>` : `Ultimo aggiornamento: ${dbUsage?.lastUpdate || 'mai'}`}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,12 +172,19 @@ export async function renderAdmin(container, state) {
     // Import JSON (triggers file selection)
     const fileInput = document.getElementById('admin-restore-file');
     document.getElementById('admin-import-json')?.addEventListener('click', () => {
-        fileInput.click();
+        if (confirm('ATTENZIONE: Il ripristino sovrascriverà i dati attuali con quelli contenuti nel file JSON. Vuoi procedere con la selezione del file?')) {
+            fileInput.click();
+        }
     });
 
     fileInput?.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        if (!confirm(`Sei sicuro di voler importare i dati dal file "${file.name}"? Tutta la configurazione attuale verrà sostituita.`)) {
+            fileInput.value = '';
+            return;
+        }
 
         try {
             await importDataFromJSON(file);
@@ -187,6 +213,7 @@ export async function renderAdmin(container, state) {
     // Generate Test Data
     document.getElementById('admin-generate-test')?.addEventListener('click', async () => {
         if (!confirm('Vuoi generare 20 giocatori titolari (pwd 9999) e uno storico partite?')) return;
+        if (!confirm('ATTENZIONE: Questi dati verranno AGGIUNTI a quelli esistenti. Vuoi procedere comunque?')) return;
 
         try {
             showToast('Generazione in corso...', 'info');
@@ -235,6 +262,18 @@ export async function renderAdmin(container, state) {
                 showToast('Errore: ' + error.message, 'error');
             }
         });
+    });
+
+    // Refresh DB Usage
+    document.getElementById('admin-refresh-db-usage')?.addEventListener('click', async () => {
+        try {
+            showToast('Aggiornamento stima spazio...', 'info');
+            await getDatabaseUsage(true);
+            showToast('Spazio database aggiornato', 'success');
+            refreshCurrentPage();
+        } catch (error) {
+            showToast('Errore durante l\'aggiornamento: ' + error.message, 'error');
+        }
     });
 }
 
