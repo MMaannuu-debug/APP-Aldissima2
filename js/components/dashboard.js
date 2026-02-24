@@ -216,8 +216,8 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                 </div>
     `;
 
-    // Convocation buttons (show for all players if match is open)
-    if (match.stato === STATI.CREATA || match.stato === STATI.COMPLETA) {
+    // Convocation buttons (show ONLY if the player has been convoked by admin)
+    if (isConvoked && (match.stato === STATI.CREATA || match.stato === STATI.COMPLETA)) {
         html += `
             <div class="convocation-buttons">
                 <button class="convocation-btn presente ${userResponse === RISPOSTE.PRESENTE ? 'active' : ''}"
@@ -238,6 +238,12 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                         data-risposta="${RISPOSTE.ASSENTE}">
                     ✗ Assente
                 </button>
+            </div>
+        `;
+    } else if (!isConvoked && (match.stato === STATI.CREATA || match.stato === STATI.COMPLETA)) {
+        html += `
+            <div style="text-align: center; padding: var(--spacing-3); color: var(--color-text-muted); font-size: var(--font-size-sm);">
+                Non sei ancora stato convocato per questa partita.
             </div>
         `;
     }

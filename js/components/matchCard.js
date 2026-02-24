@@ -634,6 +634,11 @@ export function renderMatchForm(match) {
 
 function renderConvocationModal(match, players) {
     const convocatiIds = match.convocatiIds || [];
+    // Un giocatore è "convocato" se è in convocatiIds OPPURE se ha già una risposta
+    // (il campo is_convocato nel DB potrebbe essere false per via di uno store stale
+    // al momento della risposta, ma la risposta stessa prova che la convocazione c'era).
+    const isPlayerConvoked = (p) =>
+        convocatiIds.includes(p.id) || !!(match.convocazioni?.[p.id]);
     const titolari = players.filter(p => p.tipologia === 'titolare' && !p.bloccato);
     const riserve = players.filter(p => p.tipologia !== 'titolare' && !p.bloccato);
 
@@ -658,11 +663,11 @@ function renderConvocationModal(match, players) {
 
             <div style="margin-bottom: var(--spacing-4);">
                 <h4 style="margin-bottom: var(--spacing-2); color: var(--color-primary-dark); font-size: var(--font-size-sm); text-transform: uppercase;">Titolari (${titolari.length})</h4>
-                ${titolari.map(p => renderConvocationPlayer(p, convocatiIds.includes(p.id), match.convocazioni?.[p.id])).join('')}
+                ${titolari.map(p => renderConvocationPlayer(p, isPlayerConvoked(p), match.convocazioni?.[p.id])).join('')}
             </div>
             <div>
                 <h4 style="margin-bottom: var(--spacing-2); color: var(--color-text-secondary); font-size: var(--font-size-sm); text-transform: uppercase;">Riserve (${riserve.length})</h4>
-                ${riserve.map(p => renderConvocationPlayer(p, convocatiIds.includes(p.id), match.convocazioni?.[p.id])).join('')}
+                ${riserve.map(p => renderConvocationPlayer(p, isPlayerConvoked(p), match.convocazioni?.[p.id])).join('')}
             </div>
         </div>
         <div class="modal-footer">
@@ -703,7 +708,16 @@ function renderConvocationModal(match, players) {
         const modalBody = document.querySelector('.modal-body');
         const items = modalBody.querySelectorAll('.player-item');
         const newConvocatiIds = [];
-        const convocazioni = { ...match.convocazioni };
+
+        // Leggi le risposte AGGIORNATE dal DB (non quelle stale del closure)
+        // per evitare di sovrascrivere risposte già confermate dai giocatori
+        let freshMatch;
+        try {
+            freshMatch = await getMatchWithDetails(match.id);
+        } catch (e) {
+            freshMatch = match; // fallback allo snapshot se la lettura fallisce
+        }
+        const freshConvocazioni = { ...(freshMatch?.convocazioni || {}) };
 
         items.forEach(item => {
             const checkbox = item.querySelector('.convocation-checkbox');
@@ -712,14 +726,28 @@ function renderConvocationModal(match, players) {
 
             if (checkbox.checked) {
                 newConvocatiIds.push(playerId);
-                convocazioni[playerId] = forceStatus || select.value;
+                if (forceStatus) {
+                    // "CONVOCA SELEZIONATI": imposta presenza forzata
+                    freshConvocazioni[playerId] = forceStatus;
+                } else {
+                    const selectedValue = select.value;
+                    // Applica la scelta admin solo se esplicita (diversa da in_attesa)
+                    // oppure se non c'era già una risposta confermata nel DB
+                    const currentDB = freshConvocazioni[playerId];
+                    if (selectedValue && selectedValue !== 'in_attesa') {
+                        freshConvocazioni[playerId] = selectedValue;
+                    } else if (!currentDB || currentDB === 'in_attesa') {
+                        freshConvocazioni[playerId] = selectedValue || 'in_attesa';
+                    }
+                    // Altrimenti: mantieni la risposta già confermata nel DB (currentDB)
+                }
             } else {
-                delete convocazioni[playerId];
+                delete freshConvocazioni[playerId];
             }
         });
 
         try {
-            await updateConvocations(match.id, newConvocatiIds, convocazioni);
+            await updateConvocations(match.id, newConvocatiIds, freshConvocazioni);
             await getAllMatches();
             showToast('Convocazioni salvate correttamente', 'success');
             renderMatchModal(match.id);

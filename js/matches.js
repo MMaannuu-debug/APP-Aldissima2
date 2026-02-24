@@ -83,28 +83,63 @@ export async function updateConvocations(matchId, convocatiIds, convocazioni) {
     const supabase = db.getClient();
     if (!supabase) return;
 
-    // First delete all existing for this match to be safe, or use upsert
-    // Upsert is better but we might have removed some.
-    // For simplicity with RLS and common patterns: delete then insert.
-    const { error: delError } = await supabase
+    // Step 1: leggi le risposte già presenti nel DB per preservarle
+    const { data: existingRows, error: fetchError } = await supabase
         .from('match_convocations')
-        .delete()
+        .select('player_id, risposta, is_convocato')
         .eq('match_id', matchId);
 
-    if (delError) throw delError;
+    if (fetchError) throw fetchError;
 
-    const insertData = convocatiIds.map(pid => ({
-        match_id: matchId,
-        player_id: pid,
-        risposta: convocazioni[pid] || RISPOSTE.IN_ATTESA,
-        is_convocato: true
-    }));
+    const existingMap = {};
+    (existingRows || []).forEach(row => {
+        existingMap[row.player_id] = row.risposta;
+    });
 
-    if (insertData.length > 0) {
-        const { error: insError } = await supabase
+    // Step 2: rimuovi le convocazioni dei giocatori non più selezionati
+    const idsToRemove = (existingRows || [])
+        .map(r => r.player_id)
+        .filter(pid => !convocatiIds.includes(pid));
+
+    if (idsToRemove.length > 0) {
+        const { error: delError } = await supabase
             .from('match_convocations')
-            .insert(insertData);
-        if (insError) throw insError;
+            .delete()
+            .eq('match_id', matchId)
+            .in('player_id', idsToRemove);
+        if (delError) throw delError;
+    }
+
+    // Step 3: upsert per i convocati — preserva la risposta esistente del DB
+    // se quella nel modal è "in_attesa" (non modificata dall'admin)
+    if (convocatiIds.length > 0) {
+        const upsertData = convocatiIds.map(pid => {
+            const adminSetRisposta = convocazioni[pid];
+            const existingRisposta = existingMap[pid];
+
+            // Usa la risposta già confermata dal giocatore (DB) a meno che
+            // l'admin abbia impostato esplicitamente una risposta diversa da 'in_attesa'
+            let risposta;
+            if (adminSetRisposta && adminSetRisposta !== RISPOSTE.IN_ATTESA) {
+                risposta = adminSetRisposta;
+            } else if (existingRisposta && existingRisposta !== RISPOSTE.IN_ATTESA) {
+                risposta = existingRisposta; // preserva risposta confermata
+            } else {
+                risposta = adminSetRisposta || RISPOSTE.IN_ATTESA;
+            }
+
+            return {
+                match_id: matchId,
+                player_id: pid,
+                risposta,
+                is_convocato: true
+            };
+        });
+
+        const { error: upsertError } = await supabase
+            .from('match_convocations')
+            .upsert(upsertData, { onConflict: 'match_id,player_id' });
+        if (upsertError) throw upsertError;
     }
 
     return await getAllMatches();
@@ -239,30 +274,51 @@ export async function deleteMatch(id) {
 // ================================
 
 export async function convokePlayer(matchId, playerId) {
-    const match = await getMatch(matchId);
+    // Usa getMatchWithDetails per leggere correttamente da Supabase (con join)
+    const match = await getMatchWithDetails(matchId);
     if (!match) throw new Error('Partita non trovata');
 
+    const supabase = db.getClient();
+    if (supabase) {
+        // Upsert diretto: aggiunge la convocazione senza toccare chi è già convocato
+        const { error } = await supabase
+            .from('match_convocations')
+            .upsert({
+                match_id: matchId,
+                player_id: playerId,
+                risposta: match.convocazioni?.[playerId] || RISPOSTE.IN_ATTESA,
+                is_convocato: true
+            }, { onConflict: 'match_id,player_id' });
+        if (error) throw error;
+        return await getAllMatches();
+    }
+
+    // Fallback locale
     const convocatiIds = [...(match.convocatiIds || [])];
-    if (!convocatiIds.includes(playerId)) {
-        convocatiIds.push(playerId);
-    }
-
+    if (!convocatiIds.includes(playerId)) convocatiIds.push(playerId);
     const convocazioni = { ...match.convocazioni };
-    if (!convocazioni[playerId]) {
-        convocazioni[playerId] = RISPOSTE.IN_ATTESA;
-    }
-
+    if (!convocazioni[playerId]) convocazioni[playerId] = RISPOSTE.IN_ATTESA;
     return await updateMatch(matchId, { convocatiIds, convocazioni });
 }
 
 export async function removeConvocation(matchId, playerId) {
-    const match = await getMatch(matchId);
-    if (!match) throw new Error('Partita non trovata');
+    const supabase = db.getClient();
+    if (supabase) {
+        const { error } = await supabase
+            .from('match_convocations')
+            .delete()
+            .eq('match_id', matchId)
+            .eq('player_id', playerId);
+        if (error) throw error;
+        return await getAllMatches();
+    }
 
+    // Fallback locale
+    const match = await getMatchWithDetails(matchId);
+    if (!match) throw new Error('Partita non trovata');
     const convocatiIds = (match.convocatiIds || []).filter(id => id !== playerId);
     const convocazioni = { ...match.convocazioni };
     delete convocazioni[playerId];
-
     return await updateMatch(matchId, { convocatiIds, convocazioni });
 }
 
@@ -272,6 +328,27 @@ export async function respondToConvocation(matchId, playerId, risposta) {
 
     if (!Object.values(RISPOSTE).includes(risposta)) {
         throw new Error('Risposta non valida');
+    }
+
+    // Verifica che il giocatore sia stato convocato dall'amministratore
+    const supabaseCheck = db.getClient();
+    if (supabaseCheck) {
+        const { data: convRow, error: convError } = await supabaseCheck
+            .from('match_convocations')
+            .select('is_convocato')
+            .eq('match_id', matchId)
+            .eq('player_id', playerId)
+            .single();
+
+        if (convError || !convRow || !convRow.is_convocato) {
+            throw new Error('Non sei convocato per questa partita');
+        }
+    } else {
+        // Fallback locale: controlla convocatiIds nello store
+        const storeMatch = store.getState().matches.find(m => m.id === matchId);
+        if (!storeMatch?.convocatiIds?.includes(playerId)) {
+            throw new Error('Non sei convocato per questa partita');
+        }
     }
 
     const convocazioni = { ...match.convocazioni, [playerId]: risposta };
@@ -294,7 +371,7 @@ export async function respondToConvocation(matchId, playerId, risposta) {
                 match_id: matchId,
                 player_id: playerId,
                 risposta: risposta,
-                is_convocato: match.convocatiIds?.includes(playerId) || false
+                is_convocato: true  // Se il giocatore risponde, era convocato per definizione
             }, { onConflict: 'match_id, player_id' });
 
         if (error) throw error;
