@@ -47,7 +47,7 @@ export async function getAllMatches() {
         .from(COLLECTION)
         .select(`
             *,
-            match_convocations(player_id, risposta, is_convocato),
+            match_convocations(player_id, risposta, is_convocato, updated_at),
             match_teams(player_id, team),
             match_events(player_id, tipo, quantita)
         `)
@@ -58,15 +58,18 @@ export async function getAllMatches() {
     // Map the relational data back to the format the app expects
     const formattedMatches = matches.map(m => {
         const convocazioni = {};
+        const convocazioniTimestamps = {};
         const convocatiIds = [];
         m.match_convocations.forEach(c => {
             convocazioni[c.player_id] = c.risposta;
+            convocazioniTimestamps[c.player_id] = c.updated_at;
             if (c.is_convocato) convocatiIds.push(c.player_id);
         });
 
         return {
             ...m,
             convocazioni,
+            convocazioniTimestamps,
             convocatiIds,
             squadraRossa: m.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
             squadraBlu: m.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),
@@ -179,7 +182,7 @@ export async function getMatchWithDetails(id) {
         .from(COLLECTION)
         .select(`
             *,
-            match_convocations(player_id, risposta, is_convocato),
+            match_convocations(player_id, risposta, is_convocato, updated_at),
             match_teams(player_id, team),
             match_events(player_id, tipo, quantita)
         `)
@@ -189,15 +192,18 @@ export async function getMatchWithDetails(id) {
     if (error) throw error;
 
     const convocazioni = {};
+    const convocazioniTimestamps = {};
     const convocatiIds = [];
     match.match_convocations.forEach(c => {
         convocazioni[c.player_id] = c.risposta;
+        convocazioniTimestamps[c.player_id] = c.updated_at;
         if (c.is_convocato) convocatiIds.push(c.player_id);
     });
 
     return {
         ...match,
         convocazioni,
+        convocazioniTimestamps,
         convocatiIds,
         squadraRossa: match.match_teams.filter(t => t.team === 'rossi').map(t => t.player_id),
         squadraBlu: match.match_teams.filter(t => t.team === 'blu').map(t => t.player_id),

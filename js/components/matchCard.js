@@ -360,6 +360,16 @@ function groupPlayersByResponse(match, players) {
         }
     });
 
+    // 3. Sort each group by timestamp (moment of confirmation)
+    const getTime = (id) => {
+        const t = match.convocazioniTimestamps?.[id];
+        return t ? new Date(t).getTime() : 0;
+    };
+
+    Object.keys(groups).forEach(key => {
+        groups[key].sort((a, b) => getTime(a.id) - getTime(b.id));
+    });
+
     return groups;
 }
 
@@ -798,6 +808,7 @@ function renderTeamBuilder(match, players, matches) {
 
     const rossiIds = match.squadraRossa || [];
     const bluIds = match.squadraBlu || [];
+    const isAdmin = store.isAdmin();
 
     const html = `
         <div class="modal-header">
@@ -818,6 +829,8 @@ function renderTeamBuilder(match, players, matches) {
                     <div class="balance-label">Gap</div>
                 </div>
             </div>
+
+            ${isAdmin ? `<div id="params-comparison" style="margin-bottom: var(--spacing-4);"></div>` : ''}
             
             <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-4);">
                 <button class="btn btn-secondary btn-sm" id="auto-balance-btn" style="flex: 1;">
@@ -873,6 +886,45 @@ function renderTeamBuilder(match, players, matches) {
         const balance = calculateBalance(rossiPlayers, bluPlayers);
         document.getElementById('balance-index').textContent = balance.index + '%';
         document.getElementById('balance-gap').textContent = balance.gap;
+
+        // Admin-only: render parameter comparison
+        if (isAdmin) {
+            const statsR = getTeamStats(rossiPlayers);
+            const statsB = getTeamStats(bluPlayers);
+            const params = [
+                { key: 'sumValutazione', label: '⭐ Valutazione' },
+                { key: 'sumVisione', label: '👁 Visione' },
+                { key: 'sumCorsa', label: '🏃 Corsa' },
+                { key: 'sumPossesso', label: '🎯 Possesso' },
+                { key: 'sumForma', label: '💪 Forma' }
+            ];
+            const rows = params.map(({ key, label }) => {
+                const r = statsR[key];
+                const b = statsB[key];
+                const rStyle = r > b ? 'font-weight:700;' : r < b ? 'opacity:0.65;' : '';
+                const bStyle = b > r ? 'font-weight:700;' : b < r ? 'opacity:0.65;' : '';
+                return `
+                    <tr>
+                        <td style="${rStyle}color:var(--color-team-red-dark);text-align:right;padding:3px 8px;">${r}</td>
+                        <td style="text-align:center;color:var(--color-text-secondary);font-size:var(--font-size-xs);padding:3px 4px;">${label}</td>
+                        <td style="${bStyle}color:var(--color-team-blue-dark);text-align:left;padding:3px 8px;">${b}</td>
+                    </tr>`;
+            }).join('');
+            document.getElementById('params-comparison').innerHTML = `
+                <details style="background:var(--color-border-light);border-radius:var(--radius-md);padding:var(--spacing-2) var(--spacing-3);">
+                    <summary style="cursor:pointer;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-secondary);">🔍 Confronto parametri (admin)</summary>
+                    <table style="width:100%;margin-top:var(--spacing-2);border-collapse:collapse;font-size:var(--font-size-sm);">
+                        <thead>
+                            <tr>
+                                <th style="text-align:right;color:var(--color-team-red-dark);padding:3px 8px;">ROSSI</th>
+                                <th></th>
+                                <th style="text-align:left;color:var(--color-team-blue-dark);padding:3px 8px;">BLU</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </details>`;
+        }
 
         // Render lists
         document.getElementById('rossi-list').innerHTML = rossiPlayers.map(p =>

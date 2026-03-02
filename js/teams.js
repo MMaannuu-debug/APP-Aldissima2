@@ -132,7 +132,12 @@ export function getTeamStats(players) {
             avgVisione: 0,
             avgCorsa: 0,
             avgPossesso: 0,
-            avgForma: 0
+            avgForma: 0,
+            sumValutazione: 0,
+            sumVisione: 0,
+            sumCorsa: 0,
+            sumPossesso: 0,
+            sumForma: 0
         };
     }
 
@@ -143,24 +148,29 @@ export function getTeamStats(players) {
         avgVisione: 0,
         avgCorsa: 0,
         avgPossesso: 0,
-        avgForma: 0
+        avgForma: 0,
+        sumValutazione: 0,
+        sumVisione: 0,
+        sumCorsa: 0,
+        sumPossesso: 0,
+        sumForma: 0
     };
 
     players.forEach(p => {
         stats.totalRating += calculatePlayerRating(p);
-        stats.avgValutazione += p.valutazione_generale || 3;
-        stats.avgVisione += p.visione_gioco || 3;
-        stats.avgCorsa += p.corsa || 3;
-        stats.avgPossesso += p.possesso || 3;
-        stats.avgForma += p.forma_fisica || 3;
+        stats.sumValutazione += p.valutazione_generale || 3;
+        stats.sumVisione += p.visione_gioco || 3;
+        stats.sumCorsa += p.corsa || 3;
+        stats.sumPossesso += p.possesso || 3;
+        stats.sumForma += p.forma_fisica || 3;
     });
 
     stats.avgRating = Math.round(stats.totalRating / players.length * 10) / 10;
-    stats.avgValutazione = Math.round(stats.avgValutazione / players.length * 10) / 10;
-    stats.avgVisione = Math.round(stats.avgVisione / players.length * 10) / 10;
-    stats.avgCorsa = Math.round(stats.avgCorsa / players.length * 10) / 10;
-    stats.avgPossesso = Math.round(stats.avgPossesso / players.length * 10) / 10;
-    stats.avgForma = Math.round(stats.avgForma / players.length * 10) / 10;
+    stats.avgValutazione = Math.round(stats.sumValutazione / players.length * 10) / 10;
+    stats.avgVisione = Math.round(stats.sumVisione / players.length * 10) / 10;
+    stats.avgCorsa = Math.round(stats.sumCorsa / players.length * 10) / 10;
+    stats.avgPossesso = Math.round(stats.sumPossesso / players.length * 10) / 10;
+    stats.avgForma = Math.round(stats.sumForma / players.length * 10) / 10;
 
     return stats;
 }
