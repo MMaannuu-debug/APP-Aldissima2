@@ -172,7 +172,7 @@ export function getPlayerInitials(player) {
 export function calculatePlayerRating(player) {
     if (!player) return 0;
     const total = (
-        (player.valutazione_generale || 3) +
+        (player.valutazione_generale || 3) * 2 +
         (player.visione_gioco || 3) +
         (player.corsa || 3) +
         (player.possesso || 3) +
