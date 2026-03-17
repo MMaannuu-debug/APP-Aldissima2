@@ -332,65 +332,67 @@ async function handleConvocationResponse(matchId, risposta) {
 }
 
 // ================================
-// Photo Preview (Touch/Hover)
+// Photo Expand (Click)
 // ================================
 
-let photoTimeout = null;
+let photoExpandTimeout = null;
 
-document.addEventListener('touchstart', (e) => {
-    const avatar = e.target.closest('.player-avatar[data-photo]');
-    if (!avatar) return;
-
-    photoTimeout = setTimeout(() => {
-        showPhotoPreview(avatar.dataset.photo);
-    }, 3000);
-});
-
-document.addEventListener('touchend', () => {
-    if (photoTimeout) {
-        clearTimeout(photoTimeout);
-        photoTimeout = null;
+document.addEventListener('click', (e) => {
+    // Se clicco l'overlay (l'immagine ingrandita), la chiudo
+    if (e.target.closest('.photo-preview-overlay')) {
+        hidePhotoPreview();
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        return;
     }
-});
 
-document.addEventListener('mouseover', (e) => {
-    const avatar = e.target.closest('.player-avatar[data-photo]');
-    if (!avatar || !avatar.dataset.photo) return;
+    // Se clicco l'avatar del giocatore
+    const avatar = e.target.closest('.player-avatar');
+    if (avatar) {
+        let photoUrl = avatar.dataset.photo;
+        if (!photoUrl) {
+            const img = avatar.querySelector('img');
+            if (img) photoUrl = img.src;
+        }
 
-    // Avoid duplicate overlays
-    if (document.querySelector('.photo-preview-overlay')) return;
-
-    showPhotoPreview(avatar.dataset.photo);
-});
-
-document.addEventListener('mouseout', (e) => {
-    const avatar = e.target.closest('.player-avatar[data-photo]');
-    if (!avatar) return;
-
-    hidePhotoPreview();
-});
+        if (photoUrl) {
+            const existingOverlay = document.querySelector('.photo-preview-overlay');
+            if (existingOverlay) {
+                hidePhotoPreview();
+                if (existingOverlay.querySelector('img').src.includes(photoUrl)) {
+                    // Stop propagation so we don't open the modal underneath
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                    return;
+                }
+            }
+            showPhotoPreview(photoUrl);
+            e.stopImmediatePropagation(); // Avoid triggering 'view-player' or other clicks on the same element
+            e.preventDefault();
+        }
+    }
+}, true); // Use capture phase to intercept before view-player bubbling
 
 function showPhotoPreview(photoUrl) {
     if (!photoUrl) return;
 
-    // Prevent duplicate overlays
-    if (document.querySelector('.photo-preview-overlay')) return;
-
     const overlay = document.createElement('div');
     overlay.className = 'photo-preview-overlay';
     overlay.innerHTML = `<img src="${photoUrl}" alt="Foto giocatore">`;
-    overlay.addEventListener('click', hidePhotoPreview);
     document.body.appendChild(overlay);
 
-    // Auto-hide after 2 seconds on mobile
-    if ('ontouchstart' in window) {
-        setTimeout(hidePhotoPreview, 2000);
-    }
+    // Auto-hide after 5 seconds
+    if (photoExpandTimeout) clearTimeout(photoExpandTimeout);
+    photoExpandTimeout = setTimeout(hidePhotoPreview, 5000);
 }
 
 function hidePhotoPreview() {
     const overlay = document.querySelector('.photo-preview-overlay');
     if (overlay) overlay.remove();
+    if (photoExpandTimeout) {
+        clearTimeout(photoExpandTimeout);
+        photoExpandTimeout = null;
+    }
 }
 
 // ================================
