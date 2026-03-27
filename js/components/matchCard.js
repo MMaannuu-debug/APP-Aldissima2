@@ -312,11 +312,13 @@ export async function renderMatchModal(matchId) {
 
     html += '</div>';
 
-    // Footer with admin actions
-    if (isAdmin) {
+    // Footer with actions
+    const modalActions = getAdminActions(match, isAdmin, isSupervisor);
+    
+    if (modalActions) {
         html += `
             <div class="modal-footer" style="flex-wrap: wrap; gap: var(--spacing-2);">
-                ${getAdminActions(match)}
+                ${modalActions}
             </div>
         `;
     } else {
@@ -405,38 +407,56 @@ function renderPlayerGroup(title, players, color, match) {
     `;
 }
 
-function getAdminActions(match) {
+function getAdminActions(match, isAdmin, isSupervisor) {
     let actions = '';
 
     switch (match.stato) {
         case STATI.CREATA:
         case STATI.COMPLETA:
-            actions = `
-                <button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>
-                <button class="btn btn-secondary btn-sm" id="convoke-btn">Convoca</button>
-                <button class="btn btn-primary btn-sm" id="create-teams-btn">Crea squadre</button>
-            `;
+            if (isAdmin) {
+                actions += `
+                    <button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>
+                    <button class="btn btn-secondary btn-sm" id="convoke-btn">Convoca</button>
+                `;
+            }
+            if (isAdmin || isSupervisor) {
+                actions += `
+                    <button class="btn btn-primary btn-sm" id="create-teams-btn">Crea squadre</button>
+                `;
+            }
             break;
         case STATI.SQUADRE_GENERATE:
-            actions = `
-                <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Reset squadre</button>
-                <button class="btn btn-primary btn-sm" id="publish-teams-btn">Pubblica</button>
-            `;
+            if (isAdmin || isSupervisor) {
+                actions += `
+                    <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Reset squadre</button>
+                    <button class="btn btn-primary btn-sm" id="publish-teams-btn">Pubblica</button>
+                `;
+            }
             break;
         case STATI.PUBBLICATA:
-            actions = `
-                <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Modifica squadre</button>
-                <button class="btn btn-primary btn-sm" id="insert-results-btn">Inserisci risultato</button>
-            `;
+            if (isAdmin || isSupervisor) {
+                actions += `
+                    <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Modifica squadre</button>
+                `;
+            }
+            if (isAdmin) {
+                actions += `
+                    <button class="btn btn-primary btn-sm" id="insert-results-btn">Inserisci risultato</button>
+                `;
+            }
             break;
         case STATI.CHIUSA:
-            actions = `
-                <button class="btn btn-secondary btn-sm" id="reopen-btn">Riapri partita</button>
-            `;
+            if (isAdmin) {
+                actions += `
+                    <button class="btn btn-secondary btn-sm" id="reopen-btn">Riapri partita</button>
+                `;
+            }
             break;
     }
 
-    actions += `<button class="btn btn-ghost btn-sm" data-action="close-modal">Chiudi</button>`;
+    if (actions !== '') {
+        actions += `<button class="btn btn-ghost btn-sm" data-action="close-modal">Chiudi</button>`;
+    }
 
     return actions;
 }
@@ -809,6 +829,7 @@ function renderTeamBuilder(match, players, matches) {
     const rossiIds = match.squadraRossa || [];
     const bluIds = match.squadraBlu || [];
     const isAdmin = store.isAdmin();
+    const isSupervisor = store.isSupervisor();
 
     const html = `
         <div class="modal-header">
@@ -830,7 +851,7 @@ function renderTeamBuilder(match, players, matches) {
                 </div>
             </div>
 
-            ${isAdmin ? `<div id="params-comparison" style="margin-bottom: var(--spacing-4);"></div>` : ''}
+            ${(isAdmin || isSupervisor) ? `<div id="params-comparison" style="margin-bottom: var(--spacing-4);"></div>` : ''}
             
             <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-4);">
                 <button class="btn btn-secondary btn-sm" id="auto-balance-btn" style="flex: 1;">
@@ -887,8 +908,8 @@ function renderTeamBuilder(match, players, matches) {
         document.getElementById('balance-index').textContent = balance.index + '%';
         document.getElementById('balance-gap').textContent = balance.gap;
 
-        // Admin-only: render parameter comparison
-        if (isAdmin) {
+        // Render parameter comparison
+        if (isAdmin || isSupervisor) {
             const statsR = getTeamStats(rossiPlayers);
             const statsB = getTeamStats(bluPlayers);
             const params = [
@@ -912,7 +933,7 @@ function renderTeamBuilder(match, players, matches) {
             }).join('');
             document.getElementById('params-comparison').innerHTML = `
                 <details style="background:var(--color-border-light);border-radius:var(--radius-md);padding:var(--spacing-2) var(--spacing-3);">
-                    <summary style="cursor:pointer;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-secondary);">🔍 Confronto parametri (admin)</summary>
+                    <summary style="cursor:pointer;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-secondary);">🔍 Confronto parametri</summary>
                     <table style="width:100%;margin-top:var(--spacing-2);border-collapse:collapse;font-size:var(--font-size-sm);">
                         <thead>
                             <tr>

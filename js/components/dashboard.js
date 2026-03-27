@@ -28,7 +28,7 @@ export async function renderDashboard(container, state) {
     let html = '<div class="page">';
 
     // Welcome message
-    html += renderBirthdayGreeting(currentUser);
+    html += renderBirthdayGreeting(players, currentUser);
 
 
     // Active match (Top Priority)
@@ -350,30 +350,44 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
     return html;
 }
 
-function renderBirthdayGreeting(user) {
-    if (!user || !user.data_nascita) return '';
+function renderBirthdayGreeting(players, currentUser) {
+    if (!players || !players.length) return '';
 
     const today = new Date();
-    // Use manual split to avoid timezone issues with new Date(string)
-    const birthDateParts = user.data_nascita.split('-');
-    if (birthDateParts.length !== 3) return '';
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth(); // 0-11
 
-    const birthDay = parseInt(birthDateParts[2]);
-    const birthMonth = parseInt(birthDateParts[1]) - 1; // JS months are 0-11
+    const birthdayPlayers = players.filter(p => {
+        if (!p.data_nascita) return false;
+        const birthDateParts = p.data_nascita.split('-');
+        if (birthDateParts.length !== 3) return false;
+        
+        const birthDay = parseInt(birthDateParts[2]);
+        const birthMonth = parseInt(birthDateParts[1]) - 1;
+        
+        return todayDay === birthDay && todayMonth === birthMonth;
+    });
 
-    const isBirthday = today.getDate() === birthDay &&
-        today.getMonth() === birthMonth;
+    if (birthdayPlayers.length === 0) return '';
 
-    if (!isBirthday) return '';
+    let html = '';
+    birthdayPlayers.forEach(user => {
+        const displayName = user.soprannome || user.nome;
+        const isMe = currentUser && currentUser.id === user.id;
+        
+        const subtext = isMe 
+            ? "Oggi è il tuo giorno speciale, tutta l'Aldissima ti festeggia!" 
+            : `Oggi è il suo giorno speciale, tutta l'Aldissima festeggia ${displayName}!`;
 
-    const displayName = user.soprannome || user.nome;
-
-    return `
+        html += `
         <div class="birthday-banner">
             <span class="greeting">🎂 TANTI AUGURI ${displayName.toUpperCase()}! 🎈</span>
-            <span class="subtext">Oggi è il tuo giorno speciale, tutta l'Aldissima ti festeggia!</span>
+            <span class="subtext">${subtext}</span>
         </div>
         `;
+    });
+    
+    return html;
 }
 
 export default { renderDashboard };
