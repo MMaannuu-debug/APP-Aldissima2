@@ -376,7 +376,7 @@ function renderBirthdayGreeting(players, currentUser) {
         const isMe = currentUser && currentUser.id === user.id;
         
         const subtext = isMe 
-            ? "Oggi è il tuo giorno speciale, tutta l'Aldissima ti festeggia!" 
+            ? "Un anno in più, ancora in forma: auguri bomber ⚽🔥" 
             : `Oggi è il suo giorno speciale, tutta l'Aldissima festeggia ${displayName}!`;
 
         html += `
