@@ -1308,6 +1308,56 @@ body {
 }
 
 /* ================================
+   HOLIDAY BANNER
+   ================================ */
+
+.holiday-banner {
+    background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary-dark));
+    color: white;
+    padding: var(--spacing-4);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-4);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    border: 2px solid var(--color-primary-light);
+    animation: pulse-border-holiday 2s infinite ease-in-out;
+}
+
+.holiday-banner .holiday-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-2);
+}
+
+.holiday-banner .greeting {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    margin-bottom: var(--spacing-1);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.holiday-banner .subtext {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+@keyframes pulse-border-holiday {
+
+    0%,
+    100% {
+        border-color: var(--color-primary-light);
+        transform: scale(1);
+    }
+
+    50% {
+        border-color: var(--color-primary);
+        transform: scale(1.02);
+    }
+}
+
+/* ================================
    PHOTO EXPAND OVERLAY
    ================================ */
 

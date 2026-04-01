@@ -29,7 +29,9 @@ export async function renderDashboard(container, state) {
 
     // Welcome message
     html += renderBirthdayGreeting(players, currentUser);
-
+    
+    // Holiday greeting
+    html += renderHolidayGreeting();
 
     // Active match (Top Priority)
     if (activeMatch) {
@@ -388,6 +390,63 @@ function renderBirthdayGreeting(players, currentUser) {
     });
     
     return html;
+}
+
+function renderHolidayGreeting() {
+    const today = new Date();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+
+    // Check fixed holidays
+    const holidays = [
+        { day: 25, month: 12, label: 'Natale', message: "Auguri di Buon Natale a tutti i campioni dell'Aldissima! 🎄⚽", icon: '🎅' },
+        { day: 1, month: 1, label: 'Capodanno', message: "Buon Anno Nuovo! Che sia un anno ricco di gol e vittorie! 🎆🎇", icon: '🥂' },
+        { day: 6, month: 1, label: 'Epifania', message: "Buona Epifania! Anche la Befana fa il tifo per l'Aldissima! 🧹🍬", icon: '🎁' },
+        { day: 10, month: 1, label: 'San Aldo', message: "Buon San Aldo! Una giornata speciale e di festa per tutta l'Aldissima! 🎉⚽", icon: '⛪' },
+        { day: 25, month: 4, label: '25 Aprile', message: 'Buon 25 Aprile, Festa della Liberazione! Viva lo sport! 🇮🇹🕊️', icon: '🎉' },
+        { day: 1, month: 5, label: '1 Maggio', message: 'Buon 1 Maggio! Oggi riposo, ma ci si rivede presto in campo! 🛠️⚽', icon: '🌟' },
+        { day: 2, month: 6, label: '2 Giugno', message: 'Buon 2 Giugno, Festa della Repubblica! 🇮🇹✨', icon: '🎖️' },
+        { day: 15, month: 8, label: 'Ferragosto', message: 'Buon Ferragosto! Godetevi le vacanze e ricaricate le batterie per il campo! 🏖️☀️', icon: '🍉' }
+    ];
+
+    let currentHoliday = holidays.find(h => h.day === todayDay && h.month === todayMonth);
+
+    // If no fixed holiday, check Easter and Pasquetta calculate using Meeus/Jones/Butcher algorithm
+    if (!currentHoliday) {
+        const a = currentYear % 19;
+        const b = Math.floor(currentYear / 100);
+        const c = currentYear % 100;
+        const d = Math.floor(b / 4);
+        const e = b % 4;
+        const f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3);
+        const h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4);
+        const k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const easterMonth = Math.floor((h + l - 7 * m + 114) / 31);
+        const easterDay = ((h + l - 7 * m + 114) % 31) + 1;
+        
+        const pasquettaDate = new Date(currentYear, easterMonth - 1, easterDay + 1);
+
+        if (todayDay === easterDay && todayMonth === easterMonth) {
+            currentHoliday = { label: 'Pasqua', message: 'Buona Pasqua a tutti voi e alle vostre famiglie! 🕊️🥚', icon: '🐰' };
+        } else if (todayDay === pasquettaDate.getDate() && todayMonth === pasquettaDate.getMonth() + 1) {
+            currentHoliday = { label: 'Pasquetta', message: 'Buona Pasquetta! Pronti per la grigliata e per una partitella! 🍖⚽', icon: '🔥' };
+        }
+    }
+
+    if (!currentHoliday) return '';
+
+    return `
+        <div class="holiday-banner">
+            <div class="holiday-icon">${currentHoliday.icon}</div>
+            <span class="greeting">BUON ${currentHoliday.label.toUpperCase()}!</span>
+            <span class="subtext">${currentHoliday.message}</span>
+        </div>
+    `;
 }
 
 export default { renderDashboard };
