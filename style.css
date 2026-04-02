@@ -136,30 +136,49 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    background: #0f6c38; /* A darker, classic soccer field green */
     color: white;
     z-index: 9999;
 }
 
-.loading-spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+#pong-loading-canvas {
+    display: block;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    background: #117d41; /* Slightly lighter pitch color inside */
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+.goal-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    font-weight: 900;
+    color: #fce700;
+    text-shadow: 2px 2px 0 #d97706, -2px -2px 0 #d97706, 2px -2px 0 #d97706, -2px 2px 0 #d97706, 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 20;
+    animation: goalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-.loading-screen p {
-    margin-top: var(--spacing-4);
+@keyframes goalPop {
+    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.loading-text-overlay {
+    position: absolute;
+    bottom: 5vh;
     font-size: var(--font-size-lg);
-    font-weight: 500;
+    font-weight: 700;
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+    z-index: 10;
+    animation: pulseText 1.5s infinite;
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
 }
 
 /* ================================
