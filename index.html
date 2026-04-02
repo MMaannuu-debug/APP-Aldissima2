@@ -41,7 +41,7 @@
                     const goalMsg = document.getElementById('goal-message');
                     
                     let cw, ch;
-                    let ball = { x: 0, y: 0, r: 8, vx: 4, vy: 6 };
+                    let ball = { x: 0, y: 0, r: 14, vx: 4, vy: 6, angle: 0 };
                     let goalScored = false;
 
                     function resize() {
@@ -109,12 +109,47 @@
                         ctx.stroke();
                     }
 
-                    function drawBall() {
+                    function drawPolygon(x, y, radius, sides) {
                         ctx.beginPath();
-                        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
-                        ctx.fillStyle = '#fff';
+                        for (let i = 0; i < sides; i++) {
+                            let a = i * 2 * Math.PI / sides - Math.PI/2;
+                            if (i === 0) ctx.moveTo(x + radius * Math.cos(a), y + radius * Math.sin(a));
+                            else ctx.lineTo(x + radius * Math.cos(a), y + radius * Math.sin(a));
+                        }
                         ctx.fill();
                         ctx.closePath();
+                    }
+
+                    function drawBall() {
+                        ctx.save();
+                        ctx.translate(ball.x, ball.y);
+                        // Rotate the ball for a rolling effect
+                        ctx.rotate(ball.angle);
+
+                        // White base
+                        ctx.beginPath();
+                        ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff';
+                        ctx.fill();
+                        
+                        // Black pentagons
+                        ctx.fillStyle = '#222';
+                        // Center patch
+                        drawPolygon(0, 0, ball.r * 0.4, 5);
+                        // Surrounding patches
+                        for(let i=0; i<5; i++) {
+                            let a = (i * Math.PI * 2) / 5;
+                            drawPolygon(Math.cos(a) * ball.r * 0.85, Math.sin(a) * ball.r * 0.85, ball.r * 0.35, 5);
+                        }
+
+                        // Outline
+                        ctx.beginPath();
+                        ctx.arc(0, 0, ball.r, 0, Math.PI * 2);
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeStyle = '#222';
+                        ctx.stroke();
+
+                        ctx.restore();
                     }
 
                     function update() {
@@ -122,6 +157,9 @@
 
                         ball.x += ball.vx;
                         ball.y += ball.vy;
+                        // Calculate rotation speed from movement
+                        let speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+                        ball.angle += speed * 0.05;
 
                         // Left and Right walls
                         if (ball.x - ball.r < 0) {
