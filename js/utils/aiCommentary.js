@@ -146,6 +146,11 @@ function random(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function getPlayerName(player) {
+    if (!player) return "il bomber";
+    return player.soprannome || `${player.nome} ${player.cognome}`;
+}
+
 export function generaCommentoPartita(match, players) {
     const golRossi = match.gol_rossi || 0;
     const golBlu = match.gol_blu || 0;
@@ -210,7 +215,7 @@ export function generaCommentoPartita(match, players) {
 
         if (topScorerId) {
             const player = players.find(p => p.id === topScorerId);
-            const nomeGiocatore = player ? `${player.nome} ${player.cognome}` : "il bomber";
+            const nomeGiocatore = getPlayerName(player);
 
             commento += " ";
             if (maxGol >= 4) {
@@ -234,11 +239,11 @@ export function generaCommentoPartita(match, players) {
         const mvpBluPlayer = match.mvp_blu ? players.find(p => p.id === match.mvp_blu) : null;
 
         if (mvpRossiPlayer && mvpBluPlayer) {
-            commento += `Prestazioni maiuscole per ${mvpRossiPlayer.cognome} e ${mvpBluPlayer.cognome}, votati MVP del match. `;
+            commento += `Prestazioni maiuscole per ${getPlayerName(mvpRossiPlayer)} e ${getPlayerName(mvpBluPlayer)}, votati MVP del match. `;
         } else if (mvpRossiPlayer) {
-            commento += `Palma del migliore in campo a ${mvpRossiPlayer.nome} ${mvpRossiPlayer.cognome}, che ha illuminato il gioco. `;
+            commento += `Palma del migliore in campo a ${getPlayerName(mvpRossiPlayer)}, che ha illuminato il gioco. `;
         } else if (mvpBluPlayer) {
-            commento += `MVP indiscusso ${mvpBluPlayer.nome} ${mvpBluPlayer.cognome}, vero trascinatore dei suoi. `;
+            commento += `MVP indiscusso ${getPlayerName(mvpBluPlayer)}, vero trascinatore dei suoi. `;
         }
     }
 
