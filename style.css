@@ -688,42 +688,58 @@ body {
 
 .player-rating {
     display: flex;
-    gap: 2px;
+    gap: 4px;
+    align-items: center;
 }
 
-.player-rating .star {
-    color: #ffc107;
-    /* Vibrant Gold/Yellow */
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
-    font-size: 1.1em;
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: white;
+    box-shadow: var(--shadow-sm);
 }
 
-.player-rating .star.empty {
-    color: var(--color-border);
-    text-shadow: none;
-}
+.rating-badge.excellent { background: #059669; } /* Dark Green */
+.rating-badge.good { background: #10b981; }      /* Green */
+.rating-badge.sufficient { background: #f59e0b; } /* Orange/Yellow */
+.rating-badge.insufficient { background: #ef4444; } /* Red */
 
-.rating-input {
+.rating-input-container {
     display: flex;
-    gap: var(--spacing-1);
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
-.rating-input button {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--color-border);
+.rating-num-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
     cursor: pointer;
-    padding: 0;
-    transition: transform 0.1s;
+    transition: all var(--transition-fast);
 }
 
-.rating-input button.active {
-    color: #ffc107;
+.rating-num-btn:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary-50);
 }
 
-.rating-input button:hover {
-    transform: scale(1.2);
+.rating-num-btn.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary-dark);
 }
 
 /* Team assignment colors */
@@ -737,6 +753,38 @@ body {
 
 .player-item.team-none {
     background: var(--color-team-white);
+}
+
+/* Swap Selection Highlight */
+.player-item.selected-swap {
+    background: var(--color-primary-50) !important;
+    border: 2px solid var(--color-primary) !important;
+    border-radius: var(--radius-md);
+    animation: swapPulse 1.5s infinite;
+}
+
+@keyframes swapPulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.swap-btn {
+    opacity: 0.5;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.swap-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.swap-tool-btn {
+    transition: transform var(--transition-fast);
+}
+
+.swap-tool-btn:active {
+    transform: scale(0.9);
 }
 
 /* ================================

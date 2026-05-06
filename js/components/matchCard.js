@@ -25,7 +25,7 @@ import {
     TIPOLOGIE
 } from '../matches.js';
 import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
-import { createBalancedTeams, calculateBalance, getTeamStats } from '../teams.js';
+import { createBalancedTeams, calculateBalance, getTeamStats, suggestSwaps } from '../teams.js';
 import { updatePlayerStats } from '../stats.js';
 import { showModal, closeModal, showToast, refreshCurrentPage } from '../../app.js';
 import { escapeHtml } from '../utils.js';
@@ -286,6 +286,7 @@ export async function renderMatchModal(matchId) {
                                         ${p.foto ? `<img src="${p.foto}">` : getPlayerInitials(p)}
                                     </div>
                                     <span style="font-size: var(--font-size-sm); color: var(--color-team-red-dark); font-weight: 700;">${getPlayerDisplayName(p)}</span>
+                                    ${(isAdmin || isSupervisor) ? `<button class="btn-icon swap-btn" data-action="quick-swap" data-player-id="${p.id}" data-team="rossi" title="Scambia">↔️</button>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -299,6 +300,7 @@ export async function renderMatchModal(matchId) {
                                         ${p.foto ? `<img src="${p.foto}">` : getPlayerInitials(p)}
                                     </div>
                                     <span style="font-size: var(--font-size-sm); color: var(--color-team-blue-dark); font-weight: 700;">${getPlayerDisplayName(p)}</span>
+                                    ${(isAdmin || isSupervisor) ? `<button class="btn-icon swap-btn" data-action="quick-swap" data-player-id="${p.id}" data-team="blu" title="Scambia">↔️</button>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -428,7 +430,8 @@ function getAdminActions(match, isAdmin, isSupervisor) {
         case STATI.SQUADRE_GENERATE:
             if (isAdmin || isSupervisor) {
                 actions += `
-                    <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Reset squadre</button>
+                    <button class="btn btn-secondary btn-sm" id="modify-teams-btn">Modifica squadre</button>
+                    <button class="btn btn-ghost btn-sm" id="reset-teams-btn">Reset</button>
                     <button class="btn btn-primary btn-sm" id="publish-teams-btn">Pubblica</button>
                 `;
             }
@@ -436,7 +439,7 @@ function getAdminActions(match, isAdmin, isSupervisor) {
         case STATI.PUBBLICATA:
             if (isAdmin || isSupervisor) {
                 actions += `
-                    <button class="btn btn-secondary btn-sm" id="reset-teams-btn">Modifica squadre</button>
+                    <button class="btn btn-secondary btn-sm" id="modify-teams-btn">Modifica squadre</button>
                 `;
             }
             if (isAdmin) {
@@ -495,9 +498,15 @@ function setupMatchModalHandlers(match, players, matches) {
         }
     });
 
+    // Modify teams (without reset)
+    document.getElementById('modify-teams-btn')?.addEventListener('click', () => {
+        closeModal();
+        renderTeamBuilder(match, players, matches);
+    });
+
     // Reset teams
     document.getElementById('reset-teams-btn')?.addEventListener('click', async () => {
-        if (!confirm('Sei sicuro di voler resettare le squadre?')) return;
+        if (!confirm('Sei sicuro di voler cancellare le squadre attuali? Dovrai rifarle da capo.')) return;
         try {
             await resetTeams(match.id);
             showToast('Squadre resettate', 'success');
@@ -513,17 +522,17 @@ function setupMatchModalHandlers(match, players, matches) {
         renderResultsForm(match, players);
     });
 
-    // Reopen match
-    document.getElementById('reopen-btn')?.addEventListener('click', async () => {
-        try {
-            await db.update('matches', match.id, { stato: STATI.PUBBLICATA });
-            const updatedMatches = await db.getAll('matches');
-            store.setState({ matches: updatedMatches });
-            showToast('Partita riaperta', 'success');
-            closeModal();
-        } catch (error) {
-            showToast('Errore: ' + error.message, 'error');
-        }
+    // Quick swap from modal
+    document.querySelectorAll('[data-action="quick-swap"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const playerId = btn.dataset.playerId;
+            const team = btn.dataset.team;
+            
+            // This is a bit complex for a quick swap in modal without a UI state,
+            // so we'll just open the Team Builder which now has the swap tool.
+            renderTeamBuilder(match, players, matches);
+        });
     });
 }
 
@@ -853,13 +862,20 @@ function renderTeamBuilder(match, players, matches) {
 
             ${(isAdmin || isSupervisor) ? `<div id="params-comparison" style="margin-bottom: var(--spacing-4);"></div>` : ''}
             
-            <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-4);">
-                <button class="btn btn-secondary btn-sm" id="auto-balance-btn" style="flex: 1;">
-                    🎲 Bilancia automaticamente
+            <div style="display: flex; gap: var(--spacing-2); margin-bottom: var(--spacing-4); flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-sm" id="auto-balance-btn" style="flex: 1; min-width: 140px;">
+                    🎲 Bilancia auto
+                </button>
+                <button class="btn btn-secondary btn-sm" id="suggest-swap-btn" style="flex: 1; min-width: 140px;">
+                    💡 Suggerisci scambio
                 </button>
                 <button class="btn btn-ghost btn-sm" id="reset-assignment-btn">
                     ↺ Reset
                 </button>
+            </div>
+            
+            <div id="swap-notification" style="display: none; background: var(--color-primary-50); color: var(--color-primary-dark); padding: var(--spacing-2); border-radius: var(--radius-md); margin-bottom: var(--spacing-3); font-size: var(--font-size-sm); text-align: center; font-weight: 600; border: 1px dashed var(--color-primary);">
+                Seleziona un giocatore dell'altra squadra per lo scambio
             </div>
             
             <div class="team-builder" id="team-builder">
@@ -989,13 +1005,17 @@ function renderTeamBuilder(match, players, matches) {
     }
 
     function renderTeamPlayer(player, team) {
+        const isSelected = selectedForSwap && selectedForSwap.id === player.id;
         return `
-            <div class="player-item" style="padding: var(--spacing-2);">
+            <div class="player-item ${isSelected ? 'selected-swap' : ''}" style="padding: var(--spacing-2); position: relative;">
                 <div class="player-avatar" style="width: 32px; height: 32px; font-size: var(--font-size-sm);">
                     ${player.foto ? `<img src="${player.foto}">` : getPlayerInitials(player)}
                 </div>
                 <span style="flex: 1; font-size: var(--font-size-sm);">${getPlayerDisplayName(player)}</span>
-                <button class="btn-icon" data-unassign data-player-id="${player.id}" style="width: 24px; height: 24px; font-size: var(--font-size-sm);">✕</button>
+                <div style="display: flex; gap: 4px;">
+                    <button class="btn-icon swap-tool-btn" data-swap data-player-id="${player.id}" data-team="${team}" title="Scambia" style="width: 24px; height: 24px; font-size: var(--font-size-xs); background: ${isSelected ? 'var(--color-primary)' : 'transparent'}; color: ${isSelected ? 'white' : 'inherit'}">↔️</button>
+                    <button class="btn-icon" data-unassign data-player-id="${player.id}" style="width: 24px; height: 24px; font-size: var(--font-size-sm);">✕</button>
+                </div>
             </div>
         `;
     }
@@ -1015,8 +1035,150 @@ function renderTeamBuilder(match, players, matches) {
         `;
     }
 
-    // Initial render
-    updateDisplay();
+    // Swap Tool State
+    let selectedForSwap = null;
+
+    function updateDisplay() {
+        const rossiPlayers = assignments.rossi.map(id => presentPlayers.find(p => p.id === id)).filter(Boolean);
+        const bluPlayers = assignments.blu.map(id => presentPlayers.find(p => p.id === id)).filter(Boolean);
+        const unassigned = presentPlayers.filter(p =>
+            !assignments.rossi.includes(p.id) && !assignments.blu.includes(p.id)
+        );
+
+        // Update notification
+        const swapNotif = document.getElementById('swap-notification');
+        if (selectedForSwap) {
+            swapNotif.style.display = 'block';
+            swapNotif.textContent = `Scambia ${getPlayerDisplayName(selectedForSwap.player)} con...`;
+        } else {
+            swapNotif.style.display = 'none';
+        }
+
+        // Update counters
+        document.getElementById('rossi-count').textContent = rossiPlayers.length;
+        document.getElementById('blu-count').textContent = bluPlayers.length;
+
+        // Update balance
+        const balance = calculateBalance(rossiPlayers, bluPlayers);
+        document.getElementById('balance-index').textContent = balance.index + '%';
+        document.getElementById('balance-gap').textContent = balance.gap;
+
+        // Render parameter comparison
+        if (isAdmin || isSupervisor) {
+            const statsR = getTeamStats(rossiPlayers);
+            const statsB = getTeamStats(bluPlayers);
+            const params = [
+                { key: 'sumValutazione', label: '⭐ Valutazione' },
+                { key: 'sumVisione', label: '👁 Visione' },
+                { key: 'sumCorsa', label: '🏃 Corsa' },
+                { key: 'sumPossesso', label: '🎯 Possesso' },
+                { key: 'sumForma', label: '💪 Forma' }
+            ];
+            const rows = params.map(({ key, label }) => {
+                const r = statsR[key];
+                const b = statsB[key];
+                const rStyle = r > b ? 'font-weight:700;' : r < b ? 'opacity:0.65;' : '';
+                const bStyle = b > r ? 'font-weight:700;' : b < r ? 'opacity:0.65;' : '';
+                return `
+                    <tr>
+                        <td style="${rStyle}color:var(--color-team-red-dark);text-align:right;padding:3px 8px;">${r}</td>
+                        <td style="text-align:center;color:var(--color-text-secondary);font-size:var(--font-size-xs);padding:3px 4px;">${label}</td>
+                        <td style="${bStyle}color:var(--color-team-blue-dark);text-align:left;padding:3px 8px;">${b}</td>
+                    </tr>`;
+            }).join('');
+            document.getElementById('params-comparison').innerHTML = `
+                <details style="background:var(--color-border-light);border-radius:var(--radius-md);padding:var(--spacing-2) var(--spacing-3);">
+                    <summary style="cursor:pointer;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-secondary);">🔍 Confronto parametri</summary>
+                    <table style="width:100%;margin-top:var(--spacing-2);border-collapse:collapse;font-size:var(--font-size-sm);">
+                        <thead>
+                            <tr>
+                                <th style="text-align:right;color:var(--color-team-red-dark);padding:3px 8px;">ROSSI</th>
+                                <th></th>
+                                <th style="text-align:left;color:var(--color-team-blue-dark);padding:3px 8px;">BLU</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </details>`;
+        }
+
+        // Render lists
+        document.getElementById('rossi-list').innerHTML = rossiPlayers.map(p =>
+            renderTeamPlayer(p, 'rossi')
+        ).join('');
+
+        document.getElementById('blu-list').innerHTML = bluPlayers.map(p =>
+            renderTeamPlayer(p, 'blu')
+        ).join('');
+
+        document.getElementById('unassigned-list').innerHTML = unassigned.map(p =>
+            renderUnassignedPlayer(p)
+        ).join('');
+
+        // Add click handlers
+        document.querySelectorAll('[data-assign]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const playerId = btn.dataset.playerId;
+                const toTeam = btn.dataset.assign;
+                selectedForSwap = null;
+
+                // Remove from current team
+                assignments.rossi = assignments.rossi.filter(id => id !== playerId);
+                assignments.blu = assignments.blu.filter(id => id !== playerId);
+
+                // Add to new team
+                if (toTeam === 'rossi') assignments.rossi.push(playerId);
+                if (toTeam === 'blu') assignments.blu.push(playerId);
+
+                updateDisplay();
+            });
+        });
+
+        document.querySelectorAll('[data-unassign]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const playerId = btn.dataset.playerId;
+                selectedForSwap = null;
+                assignments.rossi = assignments.rossi.filter(id => id !== playerId);
+                assignments.blu = assignments.blu.filter(id => id !== playerId);
+                updateDisplay();
+            });
+        });
+
+        // Swap Logic
+        document.querySelectorAll('[data-swap]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const playerId = btn.dataset.playerId;
+                const team = btn.dataset.team;
+                const player = presentPlayers.find(p => p.id === playerId);
+
+                if (selectedForSwap) {
+                    if (selectedForSwap.id === playerId) {
+                        // Deselect
+                        selectedForSwap = null;
+                    } else if (selectedForSwap.team === team) {
+                        // Change selection within same team
+                        selectedForSwap = { id: playerId, team, player };
+                    } else {
+                        // PERFORM SWAP between teams
+                        const teamA = selectedForSwap.team;
+                        const teamB = team;
+                        const idA = selectedForSwap.id;
+                        const idB = playerId;
+
+                        assignments[teamA] = assignments[teamA].map(id => id === idA ? idB : id);
+                        assignments[teamB] = assignments[teamB].map(id => id === idB ? idA : id);
+
+                        selectedForSwap = null;
+                        showToast('Scambio effettuato!', 'success');
+                    }
+                } else {
+                    // First selection
+                    selectedForSwap = { id: playerId, team, player };
+                }
+                updateDisplay();
+            });
+        });
+    }
 
     // Auto balance
     document.getElementById('auto-balance-btn').addEventListener('click', () => {
@@ -1027,9 +1189,29 @@ function renderTeamBuilder(match, players, matches) {
         showToast(`Squadre bilanciate! Equilibrio: ${result.balance.index}%`, 'success');
     });
 
+    // Suggest Swap
+    document.getElementById('suggest-swap-btn')?.addEventListener('click', () => {
+        const suggestions = suggestSwaps(assignments.rossi, assignments.blu, presentPlayers);
+        if (suggestions.length === 0) {
+            showToast('Nessun miglioramento possibile con un singolo scambio', 'info');
+            return;
+        }
+        
+        const best = suggestions[0];
+        if (confirm(`Suggerimento: Scambia ${getPlayerDisplayName(best.from.player)} (Rossi) con ${getPlayerDisplayName(best.to.player)} (Blu)?\nL'equilibrio migliorerebbe del ${Math.round(best.improvement)}%`)) {
+            // Apply swap
+            assignments.rossi = assignments.rossi.map(id => id === best.from.player.id ? best.to.player.id : id);
+            assignments.blu = assignments.blu.map(id => id === best.to.player.id ? best.from.player.id : id);
+            updateDisplay();
+            showToast('Scambio suggerito applicato!', 'success');
+        }
+    });
+
     // Reset
     document.getElementById('reset-assignment-btn').addEventListener('click', () => {
+        if (!confirm('Vuoi svuotare le squadre?')) return;
         assignments = { rossi: [], blu: [] };
+        selectedForSwap = null;
         updateDisplay();
     });
 

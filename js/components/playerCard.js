@@ -50,7 +50,7 @@ export async function renderPlayers(container, state) {
                             </div>
                             ${isAdmin ? `
                                 <div class="player-rating">
-                                    ${renderStars(player.valutazione_generale || 3)}
+                                    ${renderRatingBadge(player.valutazione_generale || 6)}
                                 </div>
                             ` : ''}
                             ${player.bloccato ? '<span style="color: var(--color-error);">🔒</span>' : ''}
@@ -169,23 +169,31 @@ export async function renderPlayerModal(playerId) {
                     <div style="display: grid; gap: var(--spacing-2);">
                         <div style="display: flex; justify-content: space-between;">
                             <span>Valutazione generale</span>
-                            <div class="player-rating">${renderStars(player.valutazione_generale || 3)}</div>
+                            <div class="player-rating">${renderRatingBadge(player.valutazione_generale || 6)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Visione di gioco</span>
-                            <div class="player-rating">${renderStars(player.visione_gioco || 3)}</div>
+                            <div class="player-rating">${renderRatingBadge(player.visione_gioco || 6)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Corsa</span>
-                            <div class="player-rating">${renderStars(player.corsa || 3)}</div>
+                            <div class="player-rating">${renderRatingBadge(player.corsa || 6)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Possesso</span>
-                            <div class="player-rating">${renderStars(player.possesso || 3)}</div>
+                            <div class="player-rating">${renderRatingBadge(player.possesso || 6)}</div>
                         </div>
                         <div style="display: flex; justify-content: space-between;">
                             <span>Forma fisica</span>
-                            <div class="player-rating">${renderStars(player.forma_fisica || 3)}</div>
+                            <div class="player-rating">${renderRatingBadge(player.forma_fisica || 6)}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding-top: 4px; border-top: 1px dashed var(--color-border);">
+                            <span style="font-weight: 600;">🎯 Tiro / Finalizz.</span>
+                            <div class="player-rating">${renderRatingBadge(player.tiro || 6)}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="font-weight: 600;">🛡️ Difesa / Interdiz.</span>
+                            <div class="player-rating">${renderRatingBadge(player.difesa || 6)}</div>
                         </div>
                     </div>
                 </div>
@@ -295,11 +303,15 @@ export function renderPlayerForm(player) {
                     </div>
                     
                     <h4 style="margin: var(--spacing-4) 0 var(--spacing-3);">Valutazioni</h4>
-                    ${renderRatingInput('Valutazione generale', 'pf-val-gen', player?.valutazione_generale || 3)}
-                    ${renderRatingInput('Visione di gioco', 'pf-visione', player?.visione_gioco || 3)}
-                    ${renderRatingInput('Corsa', 'pf-corsa', player?.corsa || 3)}
-                    ${renderRatingInput('Possesso', 'pf-possesso', player?.possesso || 3)}
-                    ${renderRatingInput('Forma fisica', 'pf-forma', player?.forma_fisica || 3)}
+                    ${renderNumericRatingInput('Valutazione generale', 'pf-val-gen', player?.valutazione_generale || 6)}
+                    ${renderNumericRatingInput('Visione di gioco', 'pf-visione', player?.visione_gioco || 6)}
+                    ${renderNumericRatingInput('Corsa', 'pf-corsa', player?.corsa || 6)}
+                    ${renderNumericRatingInput('Possesso', 'pf-possesso', player?.possesso || 6)}
+                    ${renderNumericRatingInput('Forma fisica', 'pf-forma', player?.forma_fisica || 6)}
+                    <div style="margin-top: var(--spacing-3); padding-top: var(--spacing-2); border-top: 1px solid var(--color-border-light);">
+                        ${renderNumericRatingInput('🎯 Tiro / Finalizzazione', 'pf-tiro', player?.tiro || 6)}
+                        ${renderNumericRatingInput('🛡️ Difesa / Interdizione', 'pf-difesa', player?.difesa || 6)}
+                    </div>
                 ` : ''}
                 
                 <div class="form-group">
@@ -327,16 +339,15 @@ export function renderPlayerForm(player) {
 }
 
 function setupPlayerFormHandlers(existingPlayer) {
-    // Rating buttons
-    document.querySelectorAll('.rating-input button').forEach(btn => {
+    // Numeric rating buttons
+    document.querySelectorAll('.rating-num-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const input = btn.closest('.form-group').querySelector('input[type="hidden"]');
-            const buttons = btn.parentElement.querySelectorAll('button');
+            const container = btn.closest('.form-group');
+            const input = container.querySelector('input[type="hidden"]');
+            const buttons = container.querySelectorAll('.rating-num-btn');
             const value = parseInt(btn.dataset.value);
 
-            buttons.forEach((b, i) => {
-                b.classList.toggle('active', i < value);
-            });
+            buttons.forEach(b => b.classList.toggle('active', parseInt(b.dataset.value) === value));
             input.value = value;
         });
     });
@@ -386,11 +397,13 @@ function setupPlayerFormHandlers(existingPlayer) {
         if (isAdmin) {
             data.tipologia = document.getElementById('pf-tipologia')?.value || 'riserva';
             data.ruolo = document.getElementById('pf-ruolo-utente')?.value || 'operatore';
-            data.valutazione_generale = parseInt(document.getElementById('pf-val-gen-value')?.value) || 3;
-            data.visione_gioco = parseInt(document.getElementById('pf-visione-value')?.value) || 3;
-            data.corsa = parseInt(document.getElementById('pf-corsa-value')?.value) || 3;
-            data.possesso = parseInt(document.getElementById('pf-possesso-value')?.value) || 3;
-            data.forma_fisica = parseInt(document.getElementById('pf-forma-value')?.value) || 3;
+            data.valutazione_generale = parseInt(document.getElementById('pf-val-gen-value')?.value) || 6;
+            data.visione_gioco = parseInt(document.getElementById('pf-visione-value')?.value) || 6;
+            data.corsa = parseInt(document.getElementById('pf-corsa-value')?.value) || 6;
+            data.possesso = parseInt(document.getElementById('pf-possesso-value')?.value) || 6;
+            data.forma_fisica = parseInt(document.getElementById('pf-forma-value')?.value) || 6;
+            data.tiro = parseInt(document.getElementById('pf-tiro-value')?.value) || 6;
+            data.difesa = parseInt(document.getElementById('pf-difesa-value')?.value) || 6;
         }
 
         // Photo
@@ -464,22 +477,24 @@ function readFileAsBase64(file) {
     });
 }
 
-function renderStars(value) {
-    let html = '';
-    for (let i = 1; i <= 5; i++) {
-        html += `<span class="star ${i <= value ? '' : 'empty'}">★</span>`;
-    }
-    return html;
+function renderRatingBadge(value) {
+    let colorClass = 'insufficient';
+    if (value >= 8) colorClass = 'excellent';
+    else if (value >= 7) colorClass = 'good';
+    else if (value >= 6) colorClass = 'sufficient';
+
+    return `<span class="rating-badge ${colorClass}">${value}</span>`;
 }
 
-function renderRatingInput(label, id, value) {
+function renderNumericRatingInput(label, id, value) {
+    const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     return `
         <div class="form-group">
             <label>${label}</label>
             <input type="hidden" id="${id}-value" value="${value}">
-            <div class="rating-input">
-                ${[1, 2, 3, 4, 5].map(i => `
-                    <button type="button" class="${i <= value ? 'active' : ''}" data-value="${i}">★</button>
+            <div class="rating-input-container">
+                ${numbers.map(n => `
+                    <button type="button" class="rating-num-btn ${n === value ? 'active' : ''}" data-value="${n}">${n}</button>
                 `).join('')}
             </div>
         </div>

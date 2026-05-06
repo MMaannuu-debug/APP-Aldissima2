@@ -140,11 +140,13 @@ function getDefaultPlayerData() {
         tipologia: 'riserva',
         ruolo_principale: 'centrocampista',
         ruolo_secondario: '',
-        valutazione_generale: 3,
-        visione_gioco: 3,
-        corsa: 3,
-        possesso: 3,
-        forma_fisica: 3,
+        valutazione_generale: 6,
+        visione_gioco: 6,
+        corsa: 6,
+        possesso: 6,
+        forma_fisica: 6,
+        tiro: 6,
+        difesa: 6,
         foto: '',
         bloccato: false,
         // Stats
@@ -169,16 +171,35 @@ export function getPlayerInitials(player) {
     return escapeHtml(`${player.nome[0] || ''}${player.cognome[0] || ''}`.toUpperCase());
 }
 
+// Weights for dynamic rating calculation (Point 4)
+const ROLE_WEIGHTS = {
+    attaccante:     { gen: 2.0, vis: 1.0, cor: 1.0, pos: 1.5, for: 1.0, tiro: 2.5, dif: 0.5 },
+    difensore:      { gen: 2.0, vis: 1.0, cor: 1.0, pos: 1.0, for: 1.0, tiro: 0.5, dif: 2.5 },
+    centrocampista: { gen: 2.0, vis: 1.5, cor: 1.0, pos: 1.5, for: 1.0, tiro: 1.0, dif: 1.0 },
+    laterale:       { gen: 2.0, vis: 1.0, cor: 2.0, pos: 1.0, for: 1.0, tiro: 1.0, dif: 1.0 },
+    portiere:       { gen: 4.0, vis: 1.5, cor: 0.5, pos: 0.5, for: 1.0, tiro: 0.5, dif: 0.5 },
+    default:        { gen: 2.0, vis: 1.0, cor: 1.0, pos: 1.0, for: 1.0, tiro: 1.0, dif: 1.0 }
+};
+
 export function calculatePlayerRating(player) {
     if (!player) return 0;
-    const total = (
-        (player.valutazione_generale || 3) * 2 +
-        (player.visione_gioco || 3) +
-        (player.corsa || 3) +
-        (player.possesso || 3) +
-        (player.forma_fisica || 3)
+    
+    const role = player.ruolo_principale || 'centrocampista';
+    const weights = ROLE_WEIGHTS[role] || ROLE_WEIGHTS.default;
+    
+    const rating = (
+        (player.valutazione_generale || 3) * weights.gen +
+        (player.visione_gioco || 3) * weights.vis +
+        (player.corsa || 3) * weights.cor +
+        (player.possesso || 3) * weights.pos +
+        (player.forma_fisica || 3) * weights.for +
+        (player.tiro || 3) * weights.tiro +
+        (player.difesa || 3) * weights.dif
     );
-    return total;
+    
+    // Normalize to keep it in a similar range as before if needed, 
+    // but the balancer works with relative values so raw weighted sum is fine.
+    return Math.round(rating * 10) / 10;
 }
 
 export function getRoleLabel(role) {
