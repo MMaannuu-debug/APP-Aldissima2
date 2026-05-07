@@ -232,6 +232,116 @@ function getStatValue(player, category) {
     }
 }
 
+/**
+ * Generic version of getPlayerYearlyStats that supports period filtering
+ */
+export function getPlayerStats(player, matches, period = 'year') {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const closedMatches = matches.filter(m => m.stato === STATI.CHIUSA);
+    
+    const filteredMatches = closedMatches.filter(m => {
+        const mDate = new Date(m.data);
+        if (period === 'month') {
+            return mDate.getFullYear() === currentYear && mDate.getMonth() === currentMonth;
+        }
+        // default to year
+        return mDate.getFullYear() === currentYear;
+    });
+
+    if (filteredMatches.length === 0) {
+        return {
+            aldIndex: 0, puntiPartita: 0, presenze: 0, vittorie: 0, pareggi: 0,
+            sconfitte: 0, totali: 0, percentuale: 0, gol: 0, mediaGol: 0,
+            mvpPoints: 0, mvpRate: 0, ammonizioni: 0, badGuyRate: 0, winRate: 0
+        };
+    }
+
+    const playerMatches = filteredMatches.filter(m =>
+        (m.squadraRossa || []).includes(player.id) ||
+        (m.squadraBlu || []).includes(player.id)
+    );
+
+    const presenze = playerMatches.length;
+    
+    const gol = playerMatches.reduce((sum, m) => {
+        return sum + (m.marcatori || [])
+            .filter(s => s.playerId === player.id)
+            .reduce((s, scorer) => s + (scorer.gol || 1), 0);
+    }, 0);
+
+    const mvpPoints = playerMatches.reduce((sum, m) => {
+        const isMvp = (m.mvp_rossi === player.id || m.mvp_blu === player.id);
+        if (!isMvp) return sum;
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const result = getMatchResult(m);
+        const isWinner = (result === 'rossi' && isRossi) || (result === 'blu' && !isRossi);
+        return sum + (isWinner ? 3 : 1);
+    }, 0);
+
+    const aldIndex = playerMatches.reduce((sum, m) => {
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const result = getMatchResult(m);
+        const isWinner = (result === 'rossi' && isRossi) || (result === 'blu' && !isRossi);
+        const isDraw = result === 'pareggio';
+        return sum + (isWinner ? 3 : (isDraw ? 1 : 0)) + 1;
+    }, 0);
+
+    const winResults = playerMatches.filter(m => {
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const result = getMatchResult(m);
+        return (result === 'rossi' && isRossi) || (result === 'blu' && !isRossi);
+    }).length;
+
+    const drawResults = playerMatches.filter(m => getMatchResult(m) === 'pareggio').length;
+    const lossResults = presenze - winResults - drawResults;
+    
+    const ammonizioni = playerMatches.reduce((sum, m) => {
+        return sum + (m.ammonizioni || []).filter(id => id === player.id).length;
+    }, 0);
+
+    const calculateRate = (v, c) => c ? Math.round((v / c) * 100) : 0;
+    const calculateAvg = (v, c) => c ? Math.round((v / c) * 100) / 100 : 0;
+
+    return {
+        aldIndex, presenze, vittorie: winResults, pareggi: drawResults, sconfitte: lossResults,
+        gol, mediaGol: calculateAvg(gol, presenze),
+        mvpPoints, mvpRate: calculateAvg(mvpPoints, presenze),
+        ammonizioni, badGuyRate: calculateAvg(ammonizioni, presenze),
+        winRate: calculateRate(winResults, presenze),
+        totali: filteredMatches.length,
+        percentuale: calculateRate(presenze, filteredMatches.length)
+    };
+}
+
+/**
+ * Gets the rank of each player for a specific category and list of matches.
+ */
+export function getRanks(players, matches, category, period = 'year') {
+    const data = players.map(p => {
+        const stats = getPlayerStats(p, matches, period);
+        let value = 0;
+        switch(category) {
+            case 'ald_index': value = stats.aldIndex; break;
+            case 'gol': value = stats.gol; break;
+            case 'mvp': value = stats.mvpPoints; break;
+            case 'presenze': value = stats.presenze; break;
+            case 'vittorie': value = stats.vittorie; break;
+            case 'ammonizioni': value = stats.ammonizioni; break;
+            case 'partite_rate': value = stats.presenze; break;
+        }
+        return { id: p.id, value };
+    }).sort((a, b) => b.value - a.value);
+    
+    const ranks = {};
+    data.forEach((item, index) => {
+        ranks[item.id] = index + 1;
+    });
+    return ranks;
+}
+
 // ================================
 // Match Statistics
 // ================================
@@ -448,5 +558,7 @@ export default {
     exportPlayersToExcel,
     exportMatchesToExcel,
     exportLeaderboardToExcel,
-    exportStatsToXlsx
+    exportStatsToXlsx,
+    getPlayerStats,
+    getRanks
 };
