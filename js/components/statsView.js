@@ -18,6 +18,7 @@ import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
 import { STATI } from '../matches.js';
 
 let currentPeriod = 'year'; // Default period
+let leaderboardChart = null;
 
 export async function renderStats(container, state) {
     const { players, matches } = state;
@@ -109,6 +110,16 @@ export async function renderStats(container, state) {
                 ${renderLeaderboardContent(players, 'ald_index', matches, currentPeriod)}
             </div>
             
+            <!-- Horizontal Bar Chart -->
+            <div class="card" style="margin-top: var(--spacing-6); margin-bottom: var(--spacing-6);">
+                <div class="card-header">
+                    <span class="card-title" id="chart-title">Top 10 - ALDINDEX</span>
+                </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="leaderboard-chart"></canvas>
+                </div>
+            </div>
+            
             ${isAdmin ? `
                 <div style="margin-top: var(--spacing-6);">
                     <div class="section-header">
@@ -129,6 +140,16 @@ export async function renderStats(container, state) {
 
     container.innerHTML = html;
 
+    // Initial chart render
+    setTimeout(() => {
+        const initialCategory = 'ald_index';
+        const initialData = players.map(p => ({
+            player: p,
+            value: getPlayerStats(p, matches, currentPeriod).aldIndex
+        })).sort((a, b) => b.value - a.value);
+        renderLeaderboardChart(initialData, initialCategory);
+    }, 100);
+
     // Tab switching
     document.querySelectorAll('#leaderboard-tabs .tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -137,7 +158,11 @@ export async function renderStats(container, state) {
 
             const category = tab.dataset.category;
             const period = document.getElementById('period-selector').value;
-            document.getElementById('leaderboard-container').innerHTML = renderLeaderboardContent(players, category, matches, period);
+            const content = renderLeaderboardContent(players, category, matches, period);
+            document.getElementById('leaderboard-container').innerHTML = content.html;
+            
+            document.getElementById('chart-title').textContent = `Top 10 - ${tab.textContent.replace(/[^\w\s]/g, '').trim()}`;
+            renderLeaderboardChart(content.data, category);
         });
     });
 
@@ -146,7 +171,9 @@ export async function renderStats(container, state) {
         currentPeriod = e.target.value;
         const activeTab = document.querySelector('#leaderboard-tabs .tab.active');
         const category = activeTab ? activeTab.dataset.category : 'ald_index';
-        document.getElementById('leaderboard-container').innerHTML = renderLeaderboardContent(players, category, matches, currentPeriod);
+        const content = renderLeaderboardContent(players, category, matches, currentPeriod);
+        document.getElementById('leaderboard-container').innerHTML = content.html;
+        renderLeaderboardChart(content.data, category);
     });
 
     // Export handlers
@@ -192,7 +219,6 @@ function renderLeaderboardContent(players, category, matches, period) {
     }
 
     const top3 = data.slice(0, 3);
-    const rest = data.slice(3);
     const maxValue = data[0].value || 1;
 
     // Calculate trends
@@ -201,14 +227,80 @@ function renderLeaderboardContent(players, category, matches, period) {
     const currentRanks = getRanks(players, matches, category, period);
     const previousRanks = getRanks(players, previousMatches, category, period);
 
-    return `
-        ${renderPodium(top3, category)}
-        <div class="card">
-            <ul class="leaderboard">
-                ${data.map((item, index) => renderLeaderboardItem(item, index, maxValue, currentRanks, previousRanks, category)).join('')}
-            </ul>
-        </div>
-    `;
+    return {
+        data: data,
+        html: `
+            ${renderPodium(top3, category)}
+            <div class="card">
+                <ul class="leaderboard">
+                    ${data.map((item, index) => renderLeaderboardItem(item, index, maxValue, currentRanks, previousRanks, category)).join('')}
+                </ul>
+            </div>
+        `
+    };
+}
+
+function renderLeaderboardChart(data, category) {
+    const canvas = document.getElementById('leaderboard-chart');
+    if (!canvas) return;
+
+    if (leaderboardChart) {
+        leaderboardChart.destroy();
+    }
+
+    const top10 = data.slice(0, 10);
+    const labels = top10.map(item => item.player.nome);
+    const values = top10.map(item => item.value);
+
+    let label = 'Valore';
+    switch(category) {
+        case 'ald_index': label = 'ALDINDEX'; break;
+        case 'gol': label = 'Gol'; break;
+        case 'mvp': label = 'Punti MVP'; break;
+        case 'presenze': label = 'Presenze'; break;
+        case 'vittorie': label = 'Vittorie'; break;
+        case 'ammonizioni': label = 'Ammonizioni'; break;
+    }
+
+    leaderboardChart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: label,
+                data: values,
+                backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                borderColor: '#10b981',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => ` ${label}: ${context.raw}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { weight: '600' }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function renderPodium(top3, category) {
