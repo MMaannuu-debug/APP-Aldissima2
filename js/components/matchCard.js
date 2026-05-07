@@ -428,6 +428,9 @@ function getAdminActions(match, isAdmin, isSupervisor) {
             }
             break;
         case STATI.SQUADRE_GENERATE:
+            if (isAdmin) {
+                actions += `<button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>`;
+            }
             if (isAdmin || isSupervisor) {
                 actions += `
                     <button class="btn btn-secondary btn-sm" id="modify-teams-btn">Modifica squadre</button>
@@ -437,6 +440,9 @@ function getAdminActions(match, isAdmin, isSupervisor) {
             }
             break;
         case STATI.PUBBLICATA:
+            if (isAdmin) {
+                actions += `<button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>`;
+            }
             if (isAdmin || isSupervisor) {
                 actions += `
                     <button class="btn btn-secondary btn-sm" id="modify-teams-btn">Modifica squadre</button>
@@ -581,10 +587,7 @@ export function renderMatchForm(match) {
         <div class="modal-footer">
             ${isAdmin && isEdit ? `<button class="btn btn-danger btn-sm" id="delete-match-btn" style="margin-right: auto;">Elimina</button>` : ''}
             <button class="btn btn-secondary" data-action="close-modal">Chiudi</button>
-            ${isAdmin && isEdit && match?.stato !== STATI.CHIUSA ? `
-                <button class="btn btn-primary" id="edit-match-btn">Modifica</button>
-            ` : ''}
-            <button class="btn btn-primary" id="save-match-btn">Salva</button>
+            <button class="btn btn-primary" id="save-match-btn">${isEdit ? 'Aggiorna' : 'Salva'}</button>
         </div>
     `;
 
