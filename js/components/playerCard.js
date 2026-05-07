@@ -198,6 +198,21 @@ export async function renderPlayerModal(playerId) {
                     </div>
                 </div>
             ` : ''}
+            
+            <!-- Performance Chart -->
+            <div style="margin-bottom: var(--spacing-6);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-3);">
+                    <h4 style="margin: 0;">Trend Prestazioni</h4>
+                    <span style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">Ultime 10 partite</span>
+                </div>
+                <div class="chart-container" style="position: relative; height: 180px; width: 100%; background: var(--color-surface); border-radius: var(--radius-lg); padding: var(--spacing-2); border: 1px solid var(--color-border);">
+                    <canvas id="performance-chart-${player.id}"></canvas>
+                </div>
+                <div style="display: flex; justify-content: center; gap: var(--spacing-4); margin-top: var(--spacing-2); font-size: var(--font-size-xs);">
+                    <div style="display: flex; align-items: center; gap: 4px;"><span style="display: block; width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span> Punti</div>
+                    <div style="display: flex; align-items: center; gap: 4px;"><span style="display: block; width: 8px; height: 8px; background: #f59e0b; border-radius: 50%;"></span> Gol</div>
+                </div>
+            </div>
         </div>
         ${canEdit ? `
             <div class="modal-footer">
@@ -212,6 +227,11 @@ export async function renderPlayerModal(playerId) {
     `;
 
     showModal(html);
+
+    // Initialize chart
+    setTimeout(() => {
+        renderPerformanceChart(`performance-chart-${player.id}`, player, matches);
+    }, 100);
 
     // Edit button handler
     document.getElementById('edit-player-btn')?.addEventListener('click', () => {
@@ -514,6 +534,103 @@ function formatDate(dateString) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+}
+
+function renderPerformanceChart(canvasId, player, matches) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    // Filter and sort player's closed matches
+    const playerMatches = matches
+        .filter(m => m.stato === 'chiusa' && (
+            (m.squadraRossa || []).includes(player.id) ||
+            (m.squadraBlu || []).includes(player.id)
+        ))
+        .sort((a, b) => new Date(a.data) - new Date(b.data))
+        .slice(-10); // Last 10
+
+    if (playerMatches.length < 2) {
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.fillText('Dati insufficienti per il grafico (min. 2 partite)', canvas.width / 2, canvas.height / 2);
+        return;
+    }
+
+    const labels = playerMatches.map(m => formatDate(m.data).substring(0, 5)); // "GG/MM"
+
+    // Data 1: Punti (Vittoria=3, Pareggio=1, Sconfitta=0) + Presenza (1)
+    const pointsData = playerMatches.map(m => {
+        const isRossi = (m.squadraRossa || []).includes(player.id);
+        const result = m.gol_rossi > m.gol_blu ? 'rossi' : (m.gol_blu > m.gol_rossi ? 'blu' : 'pareggio');
+        const isWinner = (result === 'rossi' && isRossi) || (result === 'blu' && !isRossi);
+        const isDraw = result === 'pareggio';
+        return (isWinner ? 3 : (isDraw ? 1 : 0)) + 1;
+    });
+
+    // Data 2: Gol segnati
+    const goalsData = playerMatches.map(m => {
+        return (m.marcatori || [])
+            .filter(s => s.playerId === player.id)
+            .reduce((sum, s) => sum + (s.gol || 1), 0);
+    });
+
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Punti',
+                    data: pointsData,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#10b981',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Gol',
+                    data: goalsData,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    tension: 0.4,
+                    borderDash: [5, 5],
+                    pointRadius: 4,
+                    pointBackgroundColor: '#f59e0b',
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 10,
+                        font: { size: 10 }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 5,
+                    display: false // Hide axis but keep grid
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    display: false,
+                    grid: { display: false }
+                }
+            }
+        }
+    });
 }
 
 export default { renderPlayers, renderPlayerModal, renderPlayerForm };
