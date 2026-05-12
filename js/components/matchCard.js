@@ -441,7 +441,10 @@ function getAdminActions(match, isAdmin, isSupervisor) {
             break;
         case STATI.PUBBLICATA:
             if (isAdmin) {
-                actions += `<button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>`;
+                actions += `
+                    <button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>
+                    <button class="btn btn-secondary btn-sm" id="convoke-btn">Convoca</button>
+                `;
             }
             if (isAdmin || isSupervisor) {
                 actions += `
@@ -905,10 +908,10 @@ function renderTeamBuilder(match, players, matches) {
 
     showModal(html);
 
-    // State
+    // State - Filter out players who are no longer present
     let assignments = {
-        rossi: [...rossiIds],
-        blu: [...bluIds]
+        rossi: rossiIds.filter(id => presentPlayers.some(p => p.id === id)),
+        blu: bluIds.filter(id => presentPlayers.some(p => p.id === id))
     };
 
     function updateDisplay() {
