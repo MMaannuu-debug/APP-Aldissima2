@@ -145,6 +145,39 @@ export async function updateConvocations(matchId, convocatiIds, convocazioni) {
         if (upsertError) throw upsertError;
     }
 
+    // Step 4: Cleanup match_teams (rimuovi chi non è più presente o convocato)
+    // Ricarichiamo le convocazioni aggiornate per sicurezza
+    const { data: finalConvocations } = await supabase
+        .from('match_convocations')
+        .select('player_id, risposta')
+        .eq('match_id', matchId);
+
+    const nonPresentIds = (finalConvocations || [])
+        .filter(c => c.risposta !== RISPOSTE.PRESENTE)
+        .map(c => c.player_id);
+
+    // Dobbiamo rimuovere anche chi non è proprio più in match_convocations
+    const { data: teamRows } = await supabase
+        .from('match_teams')
+        .select('player_id')
+        .eq('match_id', matchId);
+    
+    const idsToRemoveFromTeams = (teamRows || [])
+        .map(r => r.player_id)
+        .filter(pid => {
+            const isStillConvocato = (finalConvocations || []).some(c => c.player_id === pid);
+            const isPresente = (finalConvocations || []).some(c => c.player_id === pid && c.risposta === RISPOSTE.PRESENTE);
+            return !isStillConvocato || !isPresente;
+        });
+
+    if (idsToRemoveFromTeams.length > 0) {
+        await supabase
+            .from('match_teams')
+            .delete()
+            .eq('match_id', matchId)
+            .in('player_id', idsToRemoveFromTeams);
+    }
+
     return await getAllMatches();
 }
 

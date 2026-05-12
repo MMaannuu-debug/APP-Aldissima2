@@ -257,8 +257,14 @@ export async function renderMatchModal(matchId) {
 
     // Teams (if generated)
     if (match.squadraRossa?.length > 0 || match.squadraBlu?.length > 0) {
-        const rossiPlayers = match.squadraRossa.map(id => players.find(p => p.id === id)).filter(Boolean);
-        const bluPlayers = match.squadraBlu.map(id => players.find(p => p.id === id)).filter(Boolean);
+        const rossiPlayers = (match.squadraRossa || [])
+            .filter(id => match.convocazioni?.[id] === RISPOSTE.PRESENTE)
+            .map(id => players.find(p => p.id === id))
+            .filter(Boolean);
+        const bluPlayers = (match.squadraBlu || [])
+            .filter(id => match.convocazioni?.[id] === RISPOSTE.PRESENTE)
+            .map(id => players.find(p => p.id === id))
+            .filter(Boolean);
         const balance = calculateBalance(rossiPlayers, bluPlayers);
 
         html += `
