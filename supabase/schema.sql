@@ -203,3 +203,15 @@ DROP TRIGGER IF EXISTS set_updated_at_matches ON public.matches;
 CREATE TRIGGER set_updated_at_matches
 BEFORE UPDATE ON public.matches
 FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+
+-- ==========================================
+-- EXPLICIT GRANTS
+-- Make schema future-proof against Supabase default schema exposure changes
+-- ==========================================
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.players TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.matches TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.match_convocations TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.match_teams TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.match_events TO anon, authenticated;
