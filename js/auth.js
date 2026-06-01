@@ -58,7 +58,10 @@ export async function login(username, password) {
     }
 
     // Find user by username (nome.cognome or soprannome)
-    const players = await db.getAll(COLLECTION);
+    let players = store.getState().players;
+    if (!players || players.length === 0) {
+        players = await db.getAll(COLLECTION);
+    }
 
     const user = players.find(p => {
         const playerUsername = `${p.nome}.${p.cognome}`.toLowerCase();
@@ -106,7 +109,10 @@ export async function register(userData) {
     }
 
     // Check if username already exists
-    const players = await db.getAll(COLLECTION);
+    let players = store.getState().players;
+    if (!players || players.length === 0) {
+        players = await db.getAll(COLLECTION);
+    }
     const existingUser = players.find(p =>
         `${p.nome}.${p.cognome}`.toLowerCase() === `${userData.nome}.${userData.cognome}`.toLowerCase()
     );
@@ -205,21 +211,30 @@ export async function restoreSession() {
             return session;
         }
 
-        const player = await db.getById(COLLECTION, session.id);
-        if (player && !player.bloccato) {
-            // Update session with latest data
-            const updatedSession = {
-                ...session,
-                ruolo: player.ruolo || 'operatore',
-                foto: player.foto,
-                data_nascita: player.data_nascita
-            };
-            setSession(updatedSession);
-            return updatedSession;
-        } else {
-            // Invalid session, clear it
-            clearSession();
-        }
+        // Return local session immediately to avoid blocking UI rendering
+        store.setState({ currentUser: session });
+
+        // Verify/update session validity in background
+        db.getById(COLLECTION, session.id).then(player => {
+            if (player && !player.bloccato) {
+                // Update session with latest data
+                const updatedSession = {
+                    ...session,
+                    ruolo: player.ruolo || 'operatore',
+                    foto: player.foto,
+                    data_nascita: player.data_nascita
+                };
+                setSession(updatedSession);
+            } else {
+                // Invalid session, clear it and reload to show login screen
+                clearSession();
+                window.location.reload();
+            }
+        }).catch(err => {
+            console.warn('Errore background nel ripristino della sessione:', err);
+        });
+
+        return session;
     }
     return null;
 }

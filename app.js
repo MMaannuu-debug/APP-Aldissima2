@@ -184,6 +184,28 @@ function showMainApp() {
 }
 
 // ================================
+// Theme Management
+// ================================
+
+function initTheme() {
+    const isDark = document.documentElement.classList.contains('dark-theme');
+    updateThemeTogglesUI(isDark);
+}
+
+function updateThemeTogglesUI(isDark) {
+    const toggles = document.querySelectorAll('.theme-toggle-btn');
+    toggles.forEach(btn => {
+        btn.textContent = isDark ? '☀️' : '🌙';
+    });
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    updateThemeTogglesUI(isDark);
+}
+
+// ================================
 // Event Handlers
 // ================================
 
@@ -287,6 +309,14 @@ function setupEventListeners() {
     $('#reg-password').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') elements.registerBtn.click();
     });
+
+    // Theme toggling event listeners
+    const themeToggles = document.querySelectorAll('.theme-toggle-btn');
+    themeToggles.forEach(toggle => {
+        toggle.addEventListener('click', toggleTheme);
+    });
+
+    initTheme();
 }
 
 // ================================
@@ -404,26 +434,40 @@ async function init() {
         // Initialize database
         await initDatabase();
 
-        // Load initial data
-        await Promise.all([
-            playersModule.getAllPlayers(),
-            matchesModule.getAllMatches()
-        ]);
-
-        // Try to restore session
+        // Try to restore session first (instant local restore)
         const user = await auth.restoreSession();
 
         // Setup event listeners
         setupEventListeners();
 
-        // Show appropriate screen
+        // Show appropriate screen immediately to make app feel super fast
         if (user) {
             showMainApp();
+
+            // Load data asynchronously in the background
+            Promise.all([
+                playersModule.getAllPlayers(),
+                matchesModule.getAllMatches()
+            ]).then(() => {
+                store.setState({ isLoading: false });
+                refreshCurrentPage();
+            }).catch(error => {
+                console.error('Errore nel caricamento dei dati in background:', error);
+                showToast('Errore caricamento dati', 'error');
+                store.setState({ isLoading: false });
+                refreshCurrentPage();
+            });
         } else {
             showAuthScreen();
+            
+            // Load players in background since it is needed for login checking, but don't block auth screen rendering
+            playersModule.getAllPlayers().then(() => {
+                store.setState({ isLoading: false });
+            }).catch(error => {
+                console.error('Errore nel caricamento dei giocatori:', error);
+                store.setState({ isLoading: false });
+            });
         }
-
-        store.setState({ isLoading: false });
 
     } catch (error) {
         console.error('Initialization error:', error);

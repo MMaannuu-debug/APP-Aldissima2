@@ -27,6 +27,17 @@
     
     <!-- Chart.js for statistics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Theme script to prevent white flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
 </head>
 
 <body>
@@ -229,6 +240,7 @@
 
         <!-- Auth screen -->
         <div id="auth-screen" class="screen hidden">
+            <button type="button" class="theme-toggle-btn floating-toggle" id="auth-theme-toggle" aria-label="Cambia tema">🌙</button>
             <div class="auth-container">
                 <div class="auth-header">
                     <div class="logo">⚽</div>
@@ -301,6 +313,7 @@
                 </nav>
 
                 <div class="header-actions">
+                    <button type="button" class="theme-toggle-btn" id="header-theme-toggle" aria-label="Cambia tema">🌙</button>
                     <span id="user-role" class="role-badge">Operatore</span>
                     <button id="logout-btn" class="btn btn-secondary btn-sm" title="Esci">🚪 Esci</button>
                 </div>

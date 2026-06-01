@@ -20,6 +20,17 @@ import { escapeHtml } from '../utils.js';
 
 
 export async function renderDashboard(container, state) {
+    if (state.isLoading) {
+        container.innerHTML = `
+            <div class="page">
+                <div class="skeleton-card" style="height: 80px; margin-bottom: var(--spacing-4); border-radius: var(--radius-lg);"></div>
+                <div class="skeleton-card" style="height: 280px; margin-bottom: var(--spacing-4); border-radius: var(--radius-lg);"></div>
+                <div class="skeleton-card" style="height: 180px; border-radius: var(--radius-lg);"></div>
+            </div>
+        `;
+        return;
+    }
+
     const { players, matches, currentUser } = state;
 
     const activeMatch = getActiveMatch(matches);
