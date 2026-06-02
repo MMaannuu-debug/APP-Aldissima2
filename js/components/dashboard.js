@@ -3,6 +3,7 @@
 // ================================
 
 import { store } from '../store.js';
+import { showToast } from '../../app.js';
 import {
     getActiveMatch,
     getRecentClosedMatch,
@@ -281,13 +282,12 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                     <div class="stat-value" style="color: var(--color-text-muted);">${stats.in_attesa}</div>
                     <div class="stat-label">In attesa</div>
                 </div>
-            </div>${currentUser.isAdmin ? `
-                <div style="margin-top: var(--spacing-4); text-align: center;">
-                    <button class="admin-btn" id="admin-copy-status-${match.id}" onclick="(async()=>{ const state=store.getState(); const matchData=state.matches.find(m=>m.id===${match.id}); if(!matchData){showToast('Nessuna partita selezionata','error');return;} const matchDate=new Date(matchData.datetime); const dateStr=matchDate.toLocaleDateString('it-IT'); const timeStr=matchDate.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}); const needed=matchData.playersNeeded||0; const present=(state.players||[]).filter(p=>p.risposta==='SI'); const presentNames=present.map(p=>p.soprannome||p.nome+' '+p.cognome).sort((a,b)=>a.localeCompare(b,'it')); const lines=[]; lines.push('📅 Partita: '+dateStr+' '+timeStr); lines.push('⚽️ Presenze: '+presentNames.length+' / '+needed+' (necessarie)'); lines.push('👥 Giocatori presenti (ordine alfabetico):'); presentNames.forEach(name=>lines.push('- '+name)); const msg=lines.join('\\n'); try{await navigator.clipboard.writeText(msg);showToast('✅ Stato copiato negli appunti','success');}catch(e){console.error(e);showToast('❌ Impossibile copiare negli appunti','error');} })();">
-                        📋 Copia stato partita
-                    </button>
-                </div>
-            ` : ''}
+                ${currentUser.isAdmin ? `
+                    <div style="margin-top: var(--spacing-4); text-align: center;">
+                        <button class="admin-btn" id="admin-copy-status-${match.id}" onclick="copyMatchStatus('${match.id}')">📋 Copia stato partita</button>
+                    </div>
+                ` : ''}
+            </div>
         `;
     }
 
@@ -368,6 +368,41 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
 
     return html;
 }
+
+/**
+ * Copy match status to clipboard and show toast.
+ * @param {string} matchId - ID of the match to copy.
+ */
+async function copyMatchStatus(matchId) {
+    const state = store.getState();
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match) {
+        showToast('Nessuna partita trovata', 'error');
+        return;
+    }
+    // Build date string
+    const matchDate = new Date(`${match.data}T${match.orario}`);
+    const dateStr = matchDate.toLocaleDateString('it-IT');
+    const timeStr = matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    const needed = getMaxPlayers(match.tipologia);
+    const presentNames = (state.players || []).filter(p =>
+        match.convocazioni && match.convocazioni[p.id] === RISPOSTE.PRESENTE
+    ).map(p => p.soprannome || p.nome + ' ' + p.cognome).sort((a, b) => a.localeCompare(b, 'it'));
+    const lines = [];
+    lines.push(`📅 Partita: ${dateStr} ${timeStr}`);
+    lines.push(`⚽️ Presenze: ${presentNames.length} / ${needed} (necessarie)`);
+    lines.push('👥 Giocatori presenti (ordine alfabetico):');
+    presentNames.forEach(name => lines.push(`- ${name}`));
+    const msg = lines.join('\n');
+    try {
+        await navigator.clipboard.writeText(msg);
+        showToast('✅ Stato copiato negli appunti', 'success');
+    } catch (e) {
+        console.error(e);
+        showToast('❌ Impossibile copiare negli appunti', 'error');
+    }
+}
+
 
 function renderBirthdayGreeting(players, currentUser) {
     if (!players || !players.length) return '';
