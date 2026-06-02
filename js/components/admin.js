@@ -31,6 +31,10 @@ export async function renderAdmin(container, state) {
             <div class="admin-section">
                 <h3 style="margin-bottom: var(--spacing-3);">Azioni rapide</h3>
                 <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
+                    <button class="admin-btn" id="admin-copy-status">
+                         <span class="admin-btn-icon">📋</span>
+                         <span class="admin-btn-label">Copia stato partita</span>
+                     </button>
                     <button class="admin-btn" id="admin-create-match">
                         <span class="admin-btn-icon">📊</span>
                         <span class="admin-btn-label">Nuova partita</span>
@@ -139,11 +143,38 @@ export async function renderAdmin(container, state) {
 
     // Event handlers
 
-    // Create match
-    document.getElementById('admin-create-match')?.addEventListener('click', async () => {
-        const { renderMatchForm } = await import('./matchCard.js');
-        renderMatchForm(null);
+    // Copy status message (admin only)
+    document.getElementById('admin-copy-status')?.addEventListener('click', async () => {
+        const state = store.getState();
+        const match = state.currentMatch || state.matches?.[0];
+        if (!match) {
+            showToast('Nessuna partita selezionata', 'error');
+            return;
+        }
+        // Data della partita
+        const matchDate = new Date(match.datetime);
+        const dateStr = matchDate.toLocaleDateString('it-IT');
+        const timeStr = matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        const needed = match.playersNeeded || 0;
+        // Giocatori presenti (risposta 'SI')
+        const present = (state.players || []).filter(p => p.risposta === 'SI');
+        const presentNames = present.map(p => p.soprannome || `${p.nome} ${p.cognome}`).sort((a, b) => a.localeCompare(b, 'it'));
+        // Costruisci messaggio
+        const lines = [];
+        lines.push(`📅 Partita: ${dateStr} ${timeStr}`);
+        lines.push(`⚽️ Presenze: ${presentNames.length} / ${needed} (necessarie)`);
+        lines.push('👥 Giocatori presenti (ordine alfabetico):');
+        presentNames.forEach(name => lines.push(`- ${name}`));
+        const msg = lines.join('\n');
+        try {
+            await navigator.clipboard.writeText(msg);
+            showToast('✅ Stato copiato negli appunti', 'success');
+        } catch (e) {
+            console.error(e);
+            showToast('❌ Impossibile copiare negli appunti', 'error');
+        }
     });
+
 
     // Create player
     document.getElementById('admin-create-player')?.addEventListener('click', async () => {
