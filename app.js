@@ -143,8 +143,20 @@ export async function refreshCurrentPage() {
 // Authentication UI
 // ================================
 
+let loadingStart = Date.now();
+let loadingHidden = false;
+function hideLoadingScreen() {
+    if (loadingHidden) return;
+    const elapsed = Date.now() - loadingStart;
+    const remaining = Math.max(2500 - elapsed, 0);
+    setTimeout(() => {
+        elements.loading.classList.add('hidden');
+        loadingHidden = true;
+    }, remaining);
+}
+
 function showAuthScreen() {
-    elements.loading.classList.add('hidden');
+    hideLoadingScreen();
     elements.authScreen.classList.remove('hidden');
     elements.mainApp.classList.add('hidden');
 
@@ -158,7 +170,7 @@ function showAuthScreen() {
 }
 
 function showMainApp() {
-    elements.loading.classList.add('hidden');
+    hideLoadingScreen();
     elements.authScreen.classList.add('hidden');
     elements.mainApp.classList.remove('hidden');
 
