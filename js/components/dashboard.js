@@ -452,19 +452,43 @@ async function copyMatchStatus(matchId) {
         match.convocazioni && match.convocazioni[p.id] === RISPOSTE.PRESENTE
     ).map(p => p.soprannome || p.nome + ' ' + p.cognome).sort((a, b) => a.localeCompare(b, 'it'));
     const lines = [];
-    lines.push(`📅 Partita: ${dateStr} ${timeStr}`);
-    lines.push(`⚽️ Presenze: ${presentNames.length} / ${needed} (necessarie)`);
-    lines.push('👥 Giocatori presenti (ordine alfabetico):');
+    lines.push(`Partita: ${dateStr} ${timeStr}`);
+    lines.push(`Presenze: ${presentNames.length} / ${needed} (necessarie)`);
+    lines.push('Giocatori presenti (ordine alfabetico):');
     presentNames.forEach(name => lines.push(`- ${name}`));
     const msg = lines.join('\n');
+    // Try modern Clipboard API first
     try {
         await navigator.clipboard.writeText(msg);
         showToast('✅ Stato copiato negli appunti', 'success');
+        return;
     } catch (e) {
-        console.error(e);
+        console.warn('Clipboard API failed, falling back to execCommand', e);
+    }
+    // Fallback for older Android browsers / non-secure contexts
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = msg;
+        // Move off-screen
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (successful) {
+            showToast('✅ Stato copiato negli appunti', 'success');
+        } else {
+            throw new Error('execCommand copy failed');
+        }
+    } catch (fallbackErr) {
+        console.error('Fallback copy failed', fallbackErr);
         showToast('❌ Impossibile copiare negli appunti', 'error');
     }
 }
+
+
 
 
 function renderBirthdayGreeting(players, currentUser) {
