@@ -33,7 +33,7 @@ export async function renderAdmin(container, state) {
                 <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-2);">
                     <button class="admin-btn" id="admin-copy-status">
                          <span class="admin-btn-icon">📋</span>
-                         <span class="admin-btn-label">Copia stato partita</span>
+                         <span class="admin-btn-label">Copia stato ultima partita</span>
                      </button>
                     <button class="admin-btn" id="admin-create-match">
                         <span class="admin-btn-icon">📊</span>
@@ -152,26 +152,27 @@ export async function renderAdmin(container, state) {
             return;
         }
         // Data della partita
-        const matchDate = new Date(match.datetime);
+        // Use match.data and match.orario fields for date and time
+        const matchDate = new Date(`${match.data}T${match.orario}`);
         const dateStr = matchDate.toLocaleDateString('it-IT');
         const timeStr = matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
         const needed = match.playersNeeded || 0;
         // Giocatori presenti (risposta 'SI')
         const present = (state.players || []).filter(p => p.risposta === 'SI');
         const presentNames = present.map(p => p.soprannome || `${p.nome} ${p.cognome}`).sort((a, b) => a.localeCompare(b, 'it'));
-        // Costruisci messaggio
+        // Costruisci messaggio senza emoji
         const lines = [];
-        lines.push(`📅 Partita: ${dateStr} ${timeStr}`);
-        lines.push(`⚽️ Presenze: ${presentNames.length} / ${needed} (necessarie)`);
-        lines.push('👥 Giocatori presenti (ordine alfabetico):');
+        lines.push(`Partita: ${dateStr} ${timeStr}`);
+        lines.push(`Presenze: ${presentNames.length} / ${needed} (necessarie)`);
+        lines.push('Giocatori presenti (ordine alfabetico):');
         presentNames.forEach(name => lines.push(`- ${name}`));
         const msg = lines.join('\n');
         try {
             await navigator.clipboard.writeText(msg);
-            showToast('✅ Stato copiato negli appunti', 'success');
+            showToast('Stato copiato negli appunti', 'success');
         } catch (e) {
             console.error(e);
-            showToast('❌ Impossibile copiare negli appunti', 'error');
+            showToast('Impossibile copiare negli appunti', 'error');
         }
     });
 

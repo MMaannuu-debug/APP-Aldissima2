@@ -437,6 +437,7 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
  * @param {string} matchId - ID of the match to copy.
  */
 async function copyMatchStatus(matchId) {
+    console.log('copyMatchStatus invoked for matchId:', matchId);
     const state = store.getState();
     const match = state.matches.find(m => m.id === matchId);
     if (!match) {
@@ -460,7 +461,7 @@ async function copyMatchStatus(matchId) {
     // Try modern Clipboard API first
     try {
         await navigator.clipboard.writeText(msg);
-        showToast('✅ Stato copiato negli appunti', 'success');
+        showToast('Stato copiato negli appunti', 'success');
         return;
     } catch (e) {
         console.warn('Clipboard API failed, falling back to execCommand', e);
@@ -484,9 +485,10 @@ async function copyMatchStatus(matchId) {
         }
     } catch (fallbackErr) {
         console.error('Fallback copy failed', fallbackErr);
-        showToast('❌ Impossibile copiare negli appunti', 'error');
+        showToast('Impossibile copiare negli appunti', 'error');
     }
 }
+window.copyMatchStatus = copyMatchStatus;
 
 
 
