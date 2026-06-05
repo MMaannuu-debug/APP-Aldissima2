@@ -109,6 +109,12 @@ export async function renderPage(page) {
 
     if (!container) return;
 
+    // Clean up dashboard carousel interval if it exists
+    if (window.dashboardCarouselInterval) {
+        clearInterval(window.dashboardCarouselInterval);
+        window.dashboardCarouselInterval = null;
+    }
+
     switch (page) {
         case 'dashboard':
             await renderDashboard(elements.mainContent, state);

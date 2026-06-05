@@ -1719,3 +1719,99 @@ body {
     right: var(--spacing-4);
     z-index: 1000;
 }
+
+/* ================================
+   HOME PODIUM CAROUSEL
+   ================================ */
+.home-podium-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--spacing-4);
+    overflow: hidden;
+    position: relative;
+    padding: var(--spacing-4) var(--spacing-4) var(--spacing-6) var(--spacing-4);
+    transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.home-podium-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-1);
+    border-bottom: 1px solid var(--color-border-light);
+    padding-bottom: var(--spacing-2);
+}
+
+.home-podium-title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.home-podium-subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.carousel-container {
+    position: relative;
+    min-height: 170px;
+}
+
+.carousel-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+}
+
+.home-podium-card .podium {
+    margin: var(--spacing-3) 0 var(--spacing-2);
+    padding: 0;
+}
+
+/* Indicators */
+.carousel-indicators {
+    position: absolute;
+    bottom: var(--spacing-2);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--spacing-2);
+    z-index: 10;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--color-text-muted);
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.carousel-dot:hover {
+    background: var(--color-text-secondary);
+}
+
+.carousel-dot.active {
+    background: var(--color-primary);
+    transform: scale(1.25);
+}

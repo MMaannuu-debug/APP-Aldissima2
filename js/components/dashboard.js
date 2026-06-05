@@ -16,7 +16,8 @@ import {
     RISPOSTE,
     getMatchIdentifier
 } from '../matches.js';
-import { getPlayerDisplayName } from '../players.js';
+import { getPlayerDisplayName, getPlayerInitials } from '../players.js';
+import { getPlayerStats } from '../stats.js';
 import { escapeHtml } from '../utils.js';
 
 
@@ -37,6 +38,22 @@ export async function renderDashboard(container, state) {
     const activeMatch = getActiveMatch(matches);
     const recentClosed = getRecentClosedMatch(matches, 3);
 
+    // Calcoliamo i dati dei podi mensili
+    const monthlyAldindex = players.map(p => ({
+        player: p,
+        value: getPlayerStats(p, matches, 'month').aldIndex
+    })).filter(item => item.value > 0).sort((a, b) => b.value - a.value).slice(0, 3);
+
+    const monthlyGoals = players.map(p => ({
+        player: p,
+        value: getPlayerStats(p, matches, 'month').gol
+    })).filter(item => item.value > 0).sort((a, b) => b.value - a.value).slice(0, 3);
+
+    const monthlyBadGuys = players.map(p => ({
+        player: p,
+        value: getPlayerStats(p, matches, 'month').ammonizioni
+    })).filter(item => item.value > 0).sort((a, b) => b.value - a.value).slice(0, 3);
+
     let html = '<div class="page">';
 
     // Welcome message
@@ -44,6 +61,9 @@ export async function renderDashboard(container, state) {
     
     // Holiday greeting
     html += renderHolidayGreeting();
+
+    // Carosello Podio Rotante Mensile
+    html += renderPodiumCarousel(monthlyAldindex, monthlyGoals, monthlyBadGuys);
 
     // Active match (Top Priority)
     if (activeMatch) {
@@ -75,6 +95,49 @@ export async function renderDashboard(container, state) {
 
     html += '</div>';
     container.innerHTML = html;
+
+    // Avvia la logica di rotazione del carosello
+    if (window.dashboardCarouselInterval) {
+        clearInterval(window.dashboardCarouselInterval);
+    }
+
+    const carousel = container.querySelector('#home-podium-carousel');
+    if (carousel) {
+        const slides = carousel.querySelectorAll('.carousel-slide');
+        const dots = carousel.querySelectorAll('.carousel-dot');
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === index);
+            });
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            const next = (currentSlide + 1) % totalSlides;
+            showSlide(next);
+        }
+
+        let intervalId = setInterval(nextSlide, 5000);
+        window.dashboardCarouselInterval = intervalId;
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                const targetIndex = parseInt(e.target.dataset.slide);
+                showSlide(targetIndex);
+                
+                // Resetta l'intervallo al click manuale
+                clearInterval(intervalId);
+                intervalId = setInterval(nextSlide, 5000);
+                window.dashboardCarouselInterval = intervalId;
+            });
+        });
+    }
 }
 
 function renderClosedMatch(match, players, matches) {
@@ -497,6 +560,78 @@ function renderHolidayGreeting() {
             <div class="holiday-icon">${currentHoliday.icon}</div>
             <span class="greeting">BUON ${currentHoliday.label.toUpperCase()}!</span>
             <span class="subtext">${currentHoliday.message}</span>
+        </div>
+    `;
+}
+
+function renderCarouselPodium(top3, title, subtitle, unit = '') {
+    const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+    const currentMonthName = months[new Date().getMonth()];
+    
+    let podiumHtml = '';
+    if (top3.length === 0) {
+        podiumHtml = `
+            <div style="text-align: center; padding: var(--spacing-4) 0; color: var(--color-text-muted);">
+                <span style="font-size: 1.8rem; display: block; margin-bottom: var(--spacing-1);">⚽</span>
+                Nessun dato per ${currentMonthName}
+            </div>
+        `;
+    } else {
+        podiumHtml = `
+            <div class="podium">
+                ${top3.map((item, index) => {
+                    const rank = index + 1;
+                    return `
+                        <div class="podium-item rank-${rank}">
+                            <div class="podium-avatar">
+                                ${rank === 1 ? '<span class="crown">👑</span>' : ''}
+                                ${item.player.foto 
+                                    ? `<img src="${item.player.foto}" alt="${getPlayerDisplayName(item.player)}">`
+                                    : getPlayerInitials(item.player)
+                                }
+                            </div>
+                            <div class="podium-name">${item.player.nome}</div>
+                            <div class="podium-value">${item.value}${unit}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="home-podium-header">
+            <span class="home-podium-title">${title}</span>
+            <span class="home-podium-subtitle">${subtitle}</span>
+        </div>
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+            ${podiumHtml}
+        </div>
+    `;
+}
+
+function renderPodiumCarousel(aldindex, goals, badGuys) {
+    const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+    const currentMonthName = months[new Date().getMonth()].toUpperCase();
+
+    return `
+        <div class="home-podium-card" id="home-podium-carousel">
+            <div class="carousel-container">
+                <div class="carousel-slide active" data-slide="0">
+                    ${renderCarouselPodium(aldindex, `Aldindex • ${currentMonthName}`, "Rendimento del Mese")}
+                </div>
+                <div class="carousel-slide" data-slide="1">
+                    ${renderCarouselPodium(goals, `Gol • ${currentMonthName}`, "Marcatori del Mese", " Gol")}
+                </div>
+                <div class="carousel-slide" data-slide="2">
+                    ${renderCarouselPodium(badGuys, `Ammonizioni • ${currentMonthName}`, "Cattivi del Mese", " 🟨")}
+                </div>
+            </div>
+            <div class="carousel-indicators">
+                <button class="carousel-dot active" data-slide="0" aria-label="Slide 1"></button>
+                <button class="carousel-dot" data-slide="1" aria-label="Slide 2"></button>
+                <button class="carousel-dot" data-slide="2" aria-label="Slide 3"></button>
+            </div>
         </div>
     `;
 }
