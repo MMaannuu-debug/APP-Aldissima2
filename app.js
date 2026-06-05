@@ -154,7 +154,7 @@ let loadingHidden = false;
 function hideLoadingScreen() {
     if (loadingHidden) return;
     const elapsed = Date.now() - loadingStart;
-    const remaining = Math.max(2500 - elapsed, 0);
+    const remaining = Math.max(4000 - elapsed, 0);
     setTimeout(() => {
         elements.loading.classList.add('hidden');
         loadingHidden = true;
