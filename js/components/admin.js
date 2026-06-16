@@ -35,6 +35,10 @@ export async function renderAdmin(container, state) {
                          <span class="admin-btn-icon">📋</span>
                          <span class="admin-btn-label">Copia stato ultima partita</span>
                      </button>
+                    <button class="admin-btn" id="admin-copy-teams" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid var(--color-border);">
+                         <span class="admin-btn-icon">🔴🔵</span>
+                         <span class="admin-btn-label" style="font-weight: 600;"><span style="color: var(--color-team-red-dark);">Rossi</span> / <span style="color: var(--color-team-blue-dark);">Blu</span>: Copia Squadre</span>
+                     </button>
                     <button class="admin-btn" id="admin-create-match">
                         <span class="admin-btn-icon">📊</span>
                         <span class="admin-btn-label">Nuova partita</span>
@@ -170,6 +174,60 @@ export async function renderAdmin(container, state) {
         try {
             await navigator.clipboard.writeText(msg);
             showToast('Stato copiato negli appunti', 'success');
+        } catch (e) {
+            console.error(e);
+            showToast('Impossibile copiare negli appunti', 'error');
+        }
+    });
+
+    // Copy teams message (admin only)
+    document.getElementById('admin-copy-teams')?.addEventListener('click', async () => {
+        const state = store.getState();
+        const match = state.currentMatch || state.matches?.[0];
+        if (!match) {
+            showToast('Nessuna partita selezionata', 'error');
+            return;
+        }
+
+        // Data della partita
+        const matchDate = new Date(`${match.data}T${match.orario}`);
+        const dateStr = matchDate.toLocaleDateString('it-IT');
+        const timeStr = matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+        const rossiIds = match.squadraRossa || [];
+        const bluIds = match.squadraBlu || [];
+
+        if (rossiIds.length === 0 && bluIds.length === 0) {
+            showToast('Squadre non generate per l\'ultima partita', 'error');
+            return;
+        }
+
+        const players = state.players || [];
+        
+        // Filter and get display name, prioritizing soprannome, else nome + cognome
+        const getPlayerName = (pid) => {
+            const p = players.find(pl => pl.id === pid);
+            if (!p) return 'Sconosciuto';
+            return p.soprannome || `${p.nome} ${p.cognome}`;
+        };
+
+        const rossiNames = rossiIds.map(getPlayerName);
+        const bluNames = bluIds.map(getPlayerName);
+
+        const lines = [];
+        lines.push(`⚽ *PARTITA: ${dateStr} - ${timeStr}*`);
+        lines.push(`📍 *Luogo:* ${match.luogo}`);
+        lines.push(``);
+        lines.push(`🔴 *SQUADRA ROSSA*`);
+        rossiNames.forEach(name => lines.push(`- ${name}`));
+        lines.push(``);
+        lines.push(`🔵 *SQUADRA BLU*`);
+        bluNames.forEach(name => lines.push(`- ${name}`));
+
+        const msg = lines.join('\n');
+        try {
+            await navigator.clipboard.writeText(msg);
+            showToast('Squadre copiate negli appunti', 'success');
         } catch (e) {
             console.error(e);
             showToast('Impossibile copiare negli appunti', 'error');
