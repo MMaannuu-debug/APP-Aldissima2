@@ -384,9 +384,18 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
     if (match.stato === STATI.PUBBLICATA || match.stato === STATI.SQUADRE_GENERATE) {
         const rossiPlayers = match.squadraRossa.map(id => players.find(p => p.id === id)).filter(Boolean);
         const bluPlayers = match.squadraBlu.map(id => players.find(p => p.id === id)).filter(Boolean);
+        const canCopy = currentUser.ruolo === 'admin' || currentUser.ruolo === 'supervisore';
 
         html += `
-            <div class="team-builder">
+            <div style="margin-top: var(--spacing-4); margin-bottom: var(--spacing-4);">
+                ${canCopy ? `
+                    <div style="display: flex; justify-content: center; margin-bottom: var(--spacing-3);">
+                        <button class="btn btn-secondary btn-sm" id="admin-copy-teams-${match.id}" onclick="copyMatchTeams('${match.id}')" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid var(--color-border); font-weight: 600; font-size: var(--font-size-sm); padding: var(--spacing-2) var(--spacing-4); cursor: pointer; border-radius: var(--radius-md); display: flex; align-items: center; gap: 6px;">
+                            <span>📋</span> <span style="color: var(--color-team-red-dark);">Rossi</span> / <span style="color: var(--color-team-blue-dark);">Blu</span>: Copia Squadre
+                        </button>
+                    </div>
+                ` : ''}
+                <div class="team-builder">
                 <div class="team-column rossi">
                     <div class="team-column-header">ROSSI (${rossiPlayers.length})</div>
                     <div class="team-column-body">
@@ -411,9 +420,9 @@ function renderActiveMatch(match, players, allMatches, currentUser) {
                                 <span style="font-size: var(--font-size-sm); color: var(--color-team-blue-dark); font-weight: 700;">${getPlayerDisplayName(p)}</span>
                             </div>
                         `).join('')}
-                    </div>
                 </div>
             </div>
+        </div>
         `;
 
 
@@ -489,6 +498,86 @@ async function copyMatchStatus(matchId) {
     }
 }
 window.copyMatchStatus = copyMatchStatus;
+
+/**
+ * Copy match teams to clipboard and show toast.
+ * @param {string} matchId - ID of the match to copy teams for.
+ */
+async function copyMatchTeams(matchId) {
+    console.log('copyMatchTeams invoked for matchId:', matchId);
+    const state = store.getState();
+    const match = state.matches.find(m => m.id === matchId);
+    if (!match) {
+        showToast('Nessuna partita trovata', 'error');
+        return;
+    }
+
+    const rossiIds = match.squadraRossa || [];
+    const bluIds = match.squadraBlu || [];
+
+    if (rossiIds.length === 0 && bluIds.length === 0) {
+        showToast('Squadre non generate per questa partita', 'error');
+        return;
+    }
+
+    // Data della partita
+    const matchDate = new Date(`${match.data}T${match.orario}`);
+    const dateStr = matchDate.toLocaleDateString('it-IT');
+    const timeStr = matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+    // Filter and get display name, prioritizing soprannome, else nome + cognome
+    const getPlayerName = (pid) => {
+        const p = state.players.find(pl => pl.id === pid);
+        if (!p) return 'Sconosciuto';
+        return p.soprannome || `${p.nome} ${p.cognome}`;
+    };
+
+    const rossiNames = rossiIds.map(getPlayerName);
+    const bluNames = bluIds.map(getPlayerName);
+
+    const lines = [];
+    lines.push(`⚽ *PARTITA: ${dateStr} - ${timeStr}*`);
+    lines.push(`📍 *Luogo:* ${match.luogo}`);
+    lines.push(``);
+    lines.push(`🔴 *SQUADRA ROSSA*`);
+    rossiNames.forEach(name => lines.push(`- ${name}`));
+    lines.push(``);
+    lines.push(`🔵 *SQUADRA BLU*`);
+    bluNames.forEach(name => lines.push(`- ${name}`));
+
+    const msg = lines.join('\n');
+
+    // Try modern Clipboard API first
+    try {
+        await navigator.clipboard.writeText(msg);
+        showToast('Squadre copiate negli appunti', 'success');
+        return;
+    } catch (e) {
+        console.warn('Clipboard API failed, falling back to execCommand', e);
+    }
+
+    // Fallback for older Android browsers / non-secure contexts
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = msg;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (successful) {
+            showToast('✅ Squadre copiate negli appunti', 'success');
+        } else {
+            throw new Error('execCommand copy failed');
+        }
+    } catch (fallbackErr) {
+        console.error('Fallback copy failed', fallbackErr);
+        showToast('Impossibile copiare negli appunti', 'error');
+    }
+}
+window.copyMatchTeams = copyMatchTeams;
 
 
 
