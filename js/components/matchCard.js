@@ -269,7 +269,14 @@ export async function renderMatchModal(matchId) {
 
         html += `
             <div style="margin-bottom: var(--spacing-4);">
-                <div style="font-weight: 600; margin-bottom: var(--spacing-2);">Squadre</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-2);">
+                    <div style="font-weight: 600;">Squadre</div>
+                    ${((isAdmin || isSupervisor) && (match.stato === STATI.PUBBLICATA || match.stato === STATI.CHIUSA)) ? `
+                        <button class="btn btn-secondary btn-xs" id="copy-published-teams-btn-header" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid var(--color-border); font-weight: 600; font-size: var(--font-size-xs); padding: 4px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                            <span>📋</span> <span style="color: var(--color-team-red-dark);">Rossi</span> / <span style="color: var(--color-team-blue-dark);">Blu</span>: Copia
+                        </button>
+                    ` : ''}
+                </div>
                 
                 <div class="team-balance">
                     <div class="balance-indicator">
@@ -450,12 +457,12 @@ function getAdminActions(match, isAdmin, isSupervisor) {
                 actions += `
                     <button class="btn btn-secondary btn-sm" id="edit-match-btn">Modifica</button>
                     <button class="btn btn-secondary btn-sm" id="convoke-btn">Convoca</button>
-                    <button class="btn btn-sm" id="copy-published-teams-btn" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid var(--color-border); font-weight: 600;"><span style="color: var(--color-team-red-dark);">Rossi</span> / <span style="color: var(--color-team-blue-dark);">Blu</span>: Copia Squadre</button>
                 `;
             }
             if (isAdmin || isSupervisor) {
                 actions += `
                     <button class="btn btn-secondary btn-sm" id="modify-teams-btn">Modifica squadre</button>
+                    <button class="btn btn-sm" id="copy-published-teams-btn" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%); border: 1px solid var(--color-border); font-weight: 600;"><span style="color: var(--color-team-red-dark);">Rossi</span> / <span style="color: var(--color-team-blue-dark);">Blu</span>: Copia Squadre</button>
                 `;
             }
             if (isAdmin) {
@@ -552,7 +559,7 @@ function setupMatchModalHandlers(match, players, matches) {
     });
 
     // Copy published teams to clipboard for WhatsApp
-    document.getElementById('copy-published-teams-btn')?.addEventListener('click', async () => {
+    const copyTeamsToClipboard = async () => {
         const rossiIds = match.squadraRossa || [];
         const bluIds = match.squadraBlu || [];
 
@@ -594,7 +601,10 @@ function setupMatchModalHandlers(match, players, matches) {
             console.error(e);
             showToast('Impossibile copiare negli appunti', 'error');
         }
-    });
+    };
+
+    document.getElementById('copy-published-teams-btn')?.addEventListener('click', copyTeamsToClipboard);
+    document.getElementById('copy-published-teams-btn-header')?.addEventListener('click', copyTeamsToClipboard);
 }
 
 // ================================
