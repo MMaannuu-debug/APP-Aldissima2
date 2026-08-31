@@ -35,14 +35,7 @@ export function initDatabase() {
 // ================================
 
 const getColumnsForTable = (table) => {
-    switch (table) {
-        case 'players': return 'id, nome, cognome, soprannome, telefono, email, password_numeric, ruolo, tipologia, ruolo_principale, ruolo_secondario, valutazione_generale, visione_gioco, corsa, possesso, forma_fisica, tiro, difesa, foto, bloccato, presenze, voti, media_voto, mvp_count, clean_sheets, gol_segnati, ammonizioni_ricevute, partite_rossi, partite_blu, data_nascita, created_at, updated_at';
-        case 'matches': return 'id, data, orario, luogo, tipologia, stato, fase_convocazione, data_apertura_riserve, gol_rossi, gol_blu, mvp_rossi, mvp_blu, pronostico, numero_partita, marcatori, ammonizioni, commento, created_at, updated_at';
-        case 'match_convocations': return 'id, match_id, player_id, risposta, is_convocato, created_at, updated_at';
-        case 'match_teams': return 'id, match_id, player_id, team, created_at';
-        case 'match_events': return 'id, match_id, player_id, tipo, quantita, created_at';
-        default: return '*';
-    }
+    return '*';
 };
 
 export const supabaseDB = {
