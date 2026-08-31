@@ -34,31 +34,42 @@ export function initDatabase() {
 // Supabase CRUD Operations
 // ================================
 
+const getColumnsForTable = (table) => {
+    switch (table) {
+        case 'players': return 'id, nome, cognome, ruolo, status, telefono, email, data_nascita, foto, note, stats, created_at, updated_at';
+        case 'matches': return 'id, data, ora, luogo, costo, status, max_players, result, created_at, updated_at';
+        case 'match_convocations': return 'id, match_id, player_id, risposta, is_convocato, updated_at';
+        case 'match_teams': return 'id, match_id, player_id, team';
+        case 'match_events': return 'id, match_id, player_id, tipo, quantita, created_at';
+        default: return '*';
+    }
+};
+
 export const supabaseDB = {
     async getAll(table) {
         if (!supabase) return localDB.getAll(table);
-        const { data, error } = await supabase.from(table).select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabase.from(table).select(getColumnsForTable(table)).order('created_at', { ascending: false });
         if (error) throw error;
         return data || [];
     },
 
     async getById(table, id) {
         if (!supabase) return localDB.getById(table, id);
-        const { data, error } = await supabase.from(table).select('*').eq('id', id).single();
+        const { data, error } = await supabase.from(table).select(getColumnsForTable(table)).eq('id', id).single();
         if (error) return null;
         return data;
     },
 
     async add(table, data) {
         if (!supabase) return localDB.add(table, data);
-        const { data: inserted, error } = await supabase.from(table).insert([data]).select('*').single();
+        const { data: inserted, error } = await supabase.from(table).insert([data]).select(getColumnsForTable(table)).single();
         if (error) throw error;
         return inserted;
     },
 
     async update(table, id, data) {
         if (!supabase) return localDB.update(table, id, data);
-        const { data: updated, error } = await supabase.from(table).update(data).eq('id', id).select().single();
+        const { data: updated, error } = await supabase.from(table).update(data).eq('id', id).select(getColumnsForTable(table)).single();
         if (error) throw error;
         return updated;
     },
@@ -72,7 +83,7 @@ export const supabaseDB = {
     async query(table, field, operator, value) {
         if (!supabase) return localDB.query(table, field, operator, value);
 
-        let query = supabase.from(table).select('*');
+        let query = supabase.from(table).select(getColumnsForTable(table));
 
         // Map operator to Supabase filter
         switch (operator) {

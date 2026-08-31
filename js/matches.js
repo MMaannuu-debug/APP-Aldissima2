@@ -46,7 +46,7 @@ export async function getAllMatches() {
     const { data: matches, error } = await supabase
         .from(COLLECTION)
         .select(`
-            *,
+            id, data, ora, luogo, costo, status, max_players, result, created_at, updated_at,
             match_convocations(player_id, risposta, is_convocato, updated_at),
             match_teams(player_id, team),
             match_events(player_id, tipo, quantita)
@@ -214,7 +214,7 @@ export async function getMatchWithDetails(id) {
     const { data: match, error } = await supabase
         .from(COLLECTION)
         .select(`
-            *,
+            id, data, ora, luogo, costo, status, max_players, result, created_at, updated_at,
             match_convocations(player_id, risposta, is_convocato, updated_at),
             match_teams(player_id, team),
             match_events(player_id, tipo, quantita)

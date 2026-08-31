@@ -104,20 +104,41 @@ export async function uploadPhoto(id, file) {
             return;
         }
 
-        if (file.size > 1024 * 1024) {
-            reject(new Error('L\'immagine deve essere max 1MB'));
-            return;
-        }
-
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const base64 = e.target.result;
-                await updatePlayer(id, { foto: base64 });
-                resolve(base64);
-            } catch (error) {
-                reject(error);
-            }
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = async () => {
+                // Resize image to max 400x400 to save bandwidth
+                const MAX_SIZE = 400;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height && width > MAX_SIZE) {
+                    height = Math.round((height * MAX_SIZE) / width);
+                    width = MAX_SIZE;
+                } else if (height > MAX_SIZE) {
+                    width = Math.round((width * MAX_SIZE) / height);
+                    height = MAX_SIZE;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Compress with JPEG at 0.7 quality
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                try {
+                    await updatePlayer(id, { foto: compressedBase64 });
+                    resolve(compressedBase64);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            img.onerror = () => reject(new Error('Errore caricamento immagine'));
+            img.src = e.target.result;
         };
         reader.onerror = () => reject(new Error('Errore lettura file'));
         reader.readAsDataURL(file);
