@@ -11,8 +11,8 @@ import {
     setTeams,
     resetTeams,
     setResults,
-    deleteMatch,
     getAllMatches,
+    refreshSingleMatch,
     getMatchIdentifier,
     getMatchWithDetails,
     formatMatchDate,
@@ -701,8 +701,7 @@ export function renderMatchForm(match) {
                 matchIdToRefresh = newMatch.id;
             }
 
-            const updatedMatches = await getAllMatches();
-            store.setState({ matches: updatedMatches });
+            await refreshSingleMatch(matchIdToRefresh || match?.id);
 
             showToast(isEdit ? 'Partita aggiornata!' : 'Partita creata!', 'success');
 
@@ -855,7 +854,7 @@ function renderConvocationModal(match, players) {
 
         try {
             await updateConvocations(match.id, newConvocatiIds, freshConvocazioni);
-            await getAllMatches();
+            await refreshSingleMatch(match.id);
             showToast('Convocazioni salvate correttamente', 'success');
             renderMatchModal(match.id);
             refreshCurrentPage();
@@ -1469,7 +1468,7 @@ function renderResultsForm(match, players) {
             showToast('Partita chiusa e commento generato!', 'success');
 
             // 3. Refresh data
-            await getAllMatches();
+            await refreshSingleMatch(match.id);
             const updatedPlayers = await db.getAll('players');
             store.setState({ players: updatedPlayers });
 

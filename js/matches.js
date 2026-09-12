@@ -178,7 +178,7 @@ export async function updateConvocations(matchId, convocatiIds, convocazioni) {
             .in('player_id', idsToRemoveFromTeams);
     }
 
-    return await getAllMatches();
+    return await refreshSingleMatch(matchId);
 }
 
 export async function updateTeams(matchId, squadraRossa, squadraBlu) {
@@ -204,7 +204,7 @@ export async function updateTeams(matchId, squadraRossa, squadraBlu) {
         if (insError) throw insError;
     }
 
-    return await getAllMatches();
+    return await refreshSingleMatch(matchId);
 }
 
 export async function getMatchWithDetails(id) {
@@ -249,6 +249,26 @@ export async function getMatch(id) {
     return await db.getById(COLLECTION, id);
 }
 
+export async function refreshSingleMatch(id) {
+    try {
+        const updatedMatch = await getMatchWithDetails(id);
+        const matches = store.getState().matches;
+        // Se non e' ancora in store, aggiungilo in testa
+        const index = matches.findIndex(m => m.id === id);
+        if (index === -1) {
+            store.setState({ matches: [updatedMatch, ...matches] });
+        } else {
+            const newMatches = [...matches];
+            newMatches[index] = updatedMatch;
+            store.setState({ matches: newMatches });
+        }
+        return updatedMatch;
+    } catch (e) {
+        // Fallback: se fallisce, ricarica tutto
+        return await getAllMatches();
+    }
+}
+
 export async function createMatch(matchData = {}) {
     // Calculate default date (next Tuesday)
     const nextTuesday = getNextTuesday();
@@ -273,7 +293,11 @@ export async function createMatch(matchData = {}) {
     };
 
     const saved = await db.add(COLLECTION, newMatch);
-    await getAllMatches();
+    
+    // Invece di ricaricare tutto, aggiungiamo alla lista locale
+    const currentMatches = store.getState().matches;
+    store.setState({ matches: [saved, ...currentMatches] });
+    
     return saved;
 }
 
@@ -329,7 +353,7 @@ export async function convokePlayer(matchId, playerId) {
                 is_convocato: true
             }, { onConflict: 'match_id,player_id' });
         if (error) throw error;
-        return await getAllMatches();
+        return await refreshSingleMatch(matchId);
     }
 
     // Fallback locale
@@ -349,7 +373,7 @@ export async function removeConvocation(matchId, playerId) {
             .eq('match_id', matchId)
             .eq('player_id', playerId);
         if (error) throw error;
-        return await getAllMatches();
+        return await refreshSingleMatch(matchId);
     }
 
     // Fallback locale
@@ -421,7 +445,7 @@ export async function respondToConvocation(matchId, playerId, risposta) {
         }
 
         // Refetch to ensure local state is consistent
-        return await getAllMatches();
+        return await refreshSingleMatch(matchId);
     }
 
     return await updateMatch(matchId, updates);
