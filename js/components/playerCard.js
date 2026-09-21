@@ -13,6 +13,7 @@ import {
 } from '../players.js';
 import { getPlayerYearlyStats } from '../stats.js';
 import { showModal, closeModal, showToast, refreshCurrentPage } from '../../app.js';
+import { uploadPlayerPhoto } from '../photoStorage.js';
 
 export async function renderPlayers(container, state) {
     const { players, currentUser } = state;
@@ -430,8 +431,7 @@ function setupPlayerFormHandlers(existingPlayer) {
         const photoInput = document.getElementById('pf-foto');
         if (photoInput.files[0]) {
             try {
-                const base64 = await readFileAsBase64(photoInput.files[0]);
-                data.foto = base64;
+                data.foto = await uploadPlayerPhoto(photoInput.files[0], existingPlayer?.id || 'nuovo');
             } catch (e) {
                 showToast('Errore caricamento foto: ' + e.message, 'error');
                 return;
