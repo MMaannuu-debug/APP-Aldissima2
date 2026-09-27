@@ -1,5 +1,5 @@
 // ================================
-// MATCH CARD COMPONENT
+// MATCH CARD COMPONENT  mnt Aggiungo riserve in lista d'attesa
 // ================================
 
 import { store } from '../store.js';
@@ -241,13 +241,20 @@ export async function renderMatchModal(matchId) {
     if (match.stato === STATI.CREATA || match.stato === STATI.COMPLETA) {
         const groupedPlayers = groupPlayersByResponse(match, players);
 
+        // I "presenti" sono già ordinati per data/ora di risposta (vedi groupPlayersByResponse).
+        // I primi maxPlayers occupano i posti disponibili, gli altri vanno in lista d'attesa.
+        const maxPlayers = getMaxPlayers(match.tipologia);
+        const titolari = groupedPlayers.presente.slice(0, maxPlayers);
+        const riserve = groupedPlayers.presente.slice(maxPlayers);
+
         html += `
             <div style="margin-bottom: var(--spacing-4);">
                 <div style="font-weight: 600; margin-bottom: var(--spacing-2);">
-                    Convocati (${stats.presente}/${getMaxPlayers(match.tipologia)})
+                    Convocati (${stats.presente}/${maxPlayers})
                 </div>
                 
-                ${renderPlayerGroup('Presenti', groupedPlayers.presente, 'var(--color-success)', match)}
+                ${renderPlayerGroup('Presenti', titolari, 'var(--color-success)', match)}
+                ${renderPlayerGroup('Riserve (posti esauriti)', riserve, 'var(--color-text-muted)', match, true)}
                 ${renderPlayerGroup('Forse', groupedPlayers.forse, 'var(--color-warning)', match)}
                 ${renderPlayerGroup('Assenti', groupedPlayers.assente, 'var(--color-error)', match)}
                 ${renderPlayerGroup('In attesa', groupedPlayers.in_attesa, 'var(--color-text-muted)', match)}
@@ -390,7 +397,7 @@ function groupPlayersByResponse(match, players) {
     return groups;
 }
 
-function renderPlayerGroup(title, players, color, match) {
+function renderPlayerGroup(title, players, color, match, waitlist = false) {
     if (players.length === 0) return '';
 
     return `
@@ -399,7 +406,7 @@ function renderPlayerGroup(title, players, color, match) {
                 ${title} (${players.length})
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-1);">
-                ${players.map(p => {
+                ${players.map((p, idx) => {
         let nameStyle = '';
         let bgStyle = 'background: var(--color-border-light);';
 
@@ -412,9 +419,19 @@ function renderPlayerGroup(title, players, color, match) {
             bgStyle = 'background: var(--color-team-blue); border: 1px solid var(--color-team-blue-dark);';
         }
 
+        // Lista d'attesa: grigio, in ordine di arrivo, con numero di posizione
+        if (waitlist) {
+            nameStyle = 'color: var(--color-text-muted);';
+            bgStyle = 'background: var(--color-border-light); opacity: 0.65; border: 1px dashed var(--color-border);';
+        }
+
+        const label = waitlist
+            ? `${idx + 1}. ${getPlayerDisplayName(p)}`
+            : getPlayerDisplayName(p);
+
         return `
                     <span style="${bgStyle} padding: var(--spacing-1) var(--spacing-2); border-radius: var(--radius-full); font-size: var(--font-size-sm); ${nameStyle}">
-                        ${getPlayerDisplayName(p)}
+                        ${label}
                     </span>
                 `}).join('')}
             </div>
@@ -902,6 +919,16 @@ function renderTeamBuilder(match, players, matches) {
         .map(([id, _]) => players.find(p => p.id === id))
         .filter(Boolean);
 
+    // Chi ha risposto "presente" dopo che i posti erano già pieni: resta selezionabile
+    // per le squadre, ma viene mostrato in grigio tra i "Non assegnati".
+    const maxPlayers = getMaxPlayers(match.tipologia);
+    const getResponseTime = (id) => {
+        const t = match.convocazioniTimestamps?.[id];
+        return t ? new Date(t).getTime() : 0;
+    };
+    const presentPlayersByTime = [...presentPlayers].sort((a, b) => getResponseTime(a.id) - getResponseTime(b.id));
+    const riservaIds = new Set(presentPlayersByTime.slice(maxPlayers).map(p => p.id));
+
     const rossiIds = match.squadraRossa || [];
     const bluIds = match.squadraBlu || [];
     const isAdmin = store.isAdmin();
@@ -1040,7 +1067,7 @@ function renderTeamBuilder(match, players, matches) {
         ).join('');
 
         document.getElementById('unassigned-list').innerHTML = unassigned.map(p =>
-            renderUnassignedPlayer(p)
+            renderUnassignedPlayer(p, riservaIds.has(p.id))
         ).join('');
 
         // Add click handlers
@@ -1087,13 +1114,19 @@ function renderTeamBuilder(match, players, matches) {
         `;
     }
 
-    function renderUnassignedPlayer(player) {
+    function renderUnassignedPlayer(player, isRiserva = false) {
+        const cardStyle = isRiserva
+            ? 'background: var(--color-border-light); border: 1px dashed var(--color-border); opacity: 0.7;'
+            : 'background: var(--color-surface); border: 1px solid var(--color-border);';
+
         return `
-            <div style="display: flex; align-items: center; gap: var(--spacing-2); background: var(--color-surface); border: 1px solid var(--color-border); padding: var(--spacing-2); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: center; gap: var(--spacing-2); ${cardStyle} padding: var(--spacing-2); border-radius: var(--radius-md);">
                 <div class="player-avatar" style="width: 28px; height: 28px; font-size: var(--font-size-xs);">
                     ${player.foto ? `<img src="${player.foto}">` : getPlayerInitials(player)}
                 </div>
-                <span style="font-size: var(--font-size-sm);">${getPlayerDisplayName(player)}</span>
+                <span style="font-size: var(--font-size-sm); color: ${isRiserva ? 'var(--color-text-muted)' : 'inherit'};">
+                    ${getPlayerDisplayName(player)}${isRiserva ? ' <span style="font-size: var(--font-size-xs); font-style: italic;">(riserva)</span>' : ''}
+                </span>
                 <div style="display: flex; gap: 4px; margin-left: var(--spacing-1);">
                     <button class="btn btn-sm" style="padding: 2px 6px; background: var(--color-team-red); color: var(--color-team-red-dark); font-weight: 700;" data-assign="rossi" data-player-id="${player.id}">R</button>
                     <button class="btn btn-sm" style="padding: 2px 6px; background: var(--color-team-blue); color: var(--color-team-blue-dark); font-weight: 700;" data-assign="blu" data-player-id="${player.id}">B</button>
@@ -1179,7 +1212,7 @@ function renderTeamBuilder(match, players, matches) {
         ).join('');
 
         document.getElementById('unassigned-list').innerHTML = unassigned.map(p =>
-            renderUnassignedPlayer(p)
+            renderUnassignedPlayer(p, riservaIds.has(p.id))
         ).join('');
 
         // Add click handlers
